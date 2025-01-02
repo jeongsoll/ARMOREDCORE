@@ -1,8 +1,0 @@
-{
-	"SourceFiles": [
-		"C:\\Project\\ARMOREDCORE\\ArmoredCore\\Source\\ArmoredCore\\ArmoredCore.Build.cs",
-		"C:\\Project\\ARMOREDCORE\\ArmoredCore\\Source\\ArmoredCore.Target.cs",
-		"C:\\Project\\ARMOREDCORE\\ArmoredCore\\Source\\ArmoredCoreEditor.Target.cs"
-	],
-	"EngineVersion": "5.4.4"
-}
