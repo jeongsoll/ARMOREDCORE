@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\ArmoredCore.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\ArmoredCore.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\ArmoredCoreEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\.editorconfig" />
+    <None Include="..\..\.vsconfig" />
+    <Filter Include="Config">
+      <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEditorPerProjectUserSettings.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultInput.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\ArmoredCore">
+      <UniqueIdentifier>{6278D974-FD61-35CD-922D-A057542E1BEE}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\ArmoredCore\ArmoredCore.Build.cs">
+      <Filter>Source\ArmoredCore</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\ArmoredCore\ArmoredCore.cpp">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ArmoredCore\ArmoredCore.h">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ArmoredCore\ArmoredCoreCharacter.cpp">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ArmoredCore\ArmoredCoreCharacter.h">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ArmoredCore\ArmoredCoreGameMode.cpp">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ArmoredCore\ArmoredCoreGameMode.h">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ArmoredCore\JS_Boss.cpp">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ArmoredCore\JS_Boss.h">
+      <Filter>Source\ArmoredCore</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

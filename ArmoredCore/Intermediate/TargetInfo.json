@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "ArmoredCore",
+			"Path": "..\\Source\\ArmoredCore.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "ArmoredCoreEditor",
+			"Path": "..\\Source\\ArmoredCoreEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}
