@@ -9,7 +9,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1b1dc1c5-e323-4505-aa78-3436a6db4164" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +35,7 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;JJH__Prototype&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;JS__Prototype__n1&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -119,14 +118,6 @@
         <option name="Build" />
       </method>
     </configuration>
-    <configuration default="true" type="Uproject" factoryName="rider.uproject">
-      <option name="DEFAULT_PROJECT_PATH" value="" />
-      <option name="PROJECT_FILE_PATH" value="" />
-      <option name="AUTO_SELECT_PRIORITY" value="0" />
-      <method v="2">
-        <option name="Build" />
-      </method>
-    </configuration>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="애플리케이션 수준" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -140,6 +131,7 @@
       <workItem from="1735804635455" duration="461000" />
       <workItem from="1735811367045" duration="22000" />
       <workItem from="1735895678075" duration="690000" />
+      <workItem from="1736315005508" duration="9000" />
     </task>
     <servers />
   </component>
