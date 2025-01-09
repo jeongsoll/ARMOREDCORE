@@ -9,11 +9,22 @@
   <component name="ChangeListManager">
     <list default="true" id="1b1dc1c5-e323-4505-aa78-3436a6db4164" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_JJH_Gamemode.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JJH/BP_JJH_Gamemode.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_JJH_PlayerController.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ThirdPerson/Input/IMC_Default.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ThirdPerson/Input/IMC_Default.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ThirdPerson/Maps/ThirdPersonMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ThirdPerson/Maps/ThirdPersonMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreGameMode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreGameMode.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DpaMonitoringSettings">
+    <option name="firstShow" value="false" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -21,6 +32,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/GameFramework/Character.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Classes/GameFramework/PlayerController.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.5/Engine/Source/Runtime/Engine/Private/Character.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -35,7 +47,8 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;JS__Prototype__n1&quot;,
+    &quot;Uproject.ArmoredCore.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;JJH__Prototype&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -131,7 +144,17 @@
       <workItem from="1735804635455" duration="461000" />
       <workItem from="1735811367045" duration="22000" />
       <workItem from="1735895678075" duration="690000" />
-      <workItem from="1736315005508" duration="9000" />
+      <workItem from="1736301761689" duration="44000" />
+      <workItem from="1736301870727" duration="3000" />
+      <workItem from="1736309906582" duration="723000" />
+      <workItem from="1736312370677" duration="702000" />
+      <workItem from="1736313153351" duration="7697000" />
+      <workItem from="1736322975463" duration="4326000" />
+      <workItem from="1736393176487" duration="1188000" />
+      <workItem from="1736397974705" duration="4595000" />
+      <workItem from="1736402602869" duration="16000" />
+      <workItem from="1736402703334" duration="38000" />
+      <workItem from="1736402804880" duration="8790000" />
     </task>
     <servers />
   </component>
