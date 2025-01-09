@@ -257,10 +257,7 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 void AArmoredCoreCharacter::BoostOn()
 {
 	if (IsMove)
-	{
 		IsBoostOn = true;
-		
-	}
 }
 
 void AArmoredCoreCharacter::QuickBoost()
@@ -286,6 +283,9 @@ void AArmoredCoreCharacter::QuickBoost()
 
 void AArmoredCoreCharacter::CheckBoostOn()
 {
+	if (!IsMove && GetCharacterMovement()->IsWalking() && IsBoostOn)
+		IsBoostOn = false;
+	
 	if (IsBoostOn)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BoostSpeed;
@@ -366,14 +366,17 @@ void AArmoredCoreCharacter::AssertBoost()
 	IsAssertBoostOn = !IsAssertBoostOn;
 	if (IsAssertBoostOn)
 	{
+		IsMove = true;
 		IsBoostOn = true;
 		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		GetCharacterMovement()->GravityScale = FlyingGravity;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 	else
 	{
 		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->GravityScale = BaseGravity;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 }
 

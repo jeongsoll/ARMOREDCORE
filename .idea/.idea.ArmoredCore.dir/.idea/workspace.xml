@@ -9,14 +9,9 @@
   <component name="ChangeListManager">
     <list default="true" id="1b1dc1c5-e323-4505-aa78-3436a6db4164" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ArmoredCore.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_JJH_Gamemode.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JJH/BP_JJH_Gamemode.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/JJH/BP_JJH_PlayerController.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JJH/BP_PlayerMech.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ThirdPerson/Input/IMC_Default.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ThirdPerson/Input/IMC_Default.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ThirdPerson/Maps/ThirdPersonMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ThirdPerson/Maps/ThirdPersonMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/JS/Blueprints/BB_Boss.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/JS/Blueprints/BB_Boss.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreGameMode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ArmoredCore/ArmoredCoreGameMode.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -155,6 +150,7 @@
       <workItem from="1736402602869" duration="16000" />
       <workItem from="1736402703334" duration="38000" />
       <workItem from="1736402804880" duration="8790000" />
+      <workItem from="1736412073924" duration="3619000" />
     </task>
     <servers />
   </component>
