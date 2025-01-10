@@ -203,18 +203,7 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	CheckBoostOn();
 	CheckCamera();
 	SetQuickBoostSpeed();
-
-	if (IsAssertBoostOn)
-	{
-		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
-		FRotator ControlRotation = GetControlRotation();
-		FRotator YawRotation(0, ControlRotation.Yaw,0);
-		SetActorRotation(YawRotation);
-		AssertBoostDir.Normalize();
-
-		if (IsAssertBoostLaunch)
-			AddMovementInput(AssertBoostDir,1000.0f,true);
-	}
+	CheckAssertBoostOn();
 }
 
 void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
@@ -287,7 +276,7 @@ void AArmoredCoreCharacter::QuickBoost()
 			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
 			CanQuickBoost = false;
 			//퀵부스트 쿨타임 0.5초로 하드코딩
-			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.5f,false);
+			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.65f,false);
 		}
 	}
 }
@@ -339,7 +328,7 @@ void AArmoredCoreCharacter::CheckCamera()
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,0),GetWorld()->GetDeltaSeconds(), 3.0f);
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,-15),GetWorld()->GetDeltaSeconds(), 3.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
 	else
@@ -393,8 +382,6 @@ void AArmoredCoreCharacter::AssertBoost()
 		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::AssertBoostStartLaunch,0.3f,false);
 		IsMove = true;
 		IsBoostOn = true;
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		GetCharacterMovement()->GravityScale = FlyingGravity;
 
 		// 플레이어가 컨트롤러에 의해 로테이션 하는 기능을 막고 카메라가 향하는 방향으로 로테이션을 돌리도록 변경
 		// 카메라 offset 변경
@@ -415,8 +402,29 @@ void AArmoredCoreCharacter::AssertBoost()
 void AArmoredCoreCharacter::AssertBoostStartLaunch()
 {
 	IsAssertBoostLaunch = true;
-	ACharacter::LaunchCharacter(AssertBoostDir * 1500.0f,true,true);
+	ACharacter::LaunchCharacter(AssertBoostDir * 1000.0f,true,true);
 }
+
+void AArmoredCoreCharacter::CheckAssertBoostOn()
+{
+	if (IsAssertBoostOn)
+	{
+		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
+		FRotator ControlRotation = GetControlRotation();
+		FRotator YawRotation(0, ControlRotation.Yaw,0);
+		SetActorRotation(YawRotation);
+		AssertBoostDir.Normalize();
+
+		if (IsAssertBoostLaunch)
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCharacterMovement()->GravityScale = FlyingGravity;
+			AddMovementInput(AssertBoostDir,1500.0f,true);
+		}
+	}
+}
+
+
 
 
 

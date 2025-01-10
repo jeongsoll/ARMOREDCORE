@@ -103,6 +103,8 @@ protected:
 
 	FTimerHandle AssertBoostLaunchHandle;
 	void AssertBoostStartLaunch();
+
+	void CheckAssertBoostOn();
 	
 	
 protected:
