@@ -88,7 +88,7 @@ protected:
 
 	void CheckBoostOn();
 
-	void CheckCameraLag();
+	void CheckCamera();
 
 	FTimerHandle QuickBoostCoolTimeHandle;
 	void ResetQuickBoostCoolTime();
@@ -100,6 +100,9 @@ protected:
 	virtual void StopJumping() override;
 
 	void AssertBoost();
+
+	FTimerHandle AssertBoostLaunchHandle;
+	void AssertBoostStartLaunch();
 	
 	
 protected:
@@ -107,7 +110,7 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
 
@@ -132,7 +135,7 @@ public:
 	bool CanQuickBoost;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool QuickBoostTrigger;
+	bool IsQuickBoostTrigger;
 	
 	UPROPERTY(EditAnywhere)
 	FVector QuickBoostDir;
@@ -155,6 +158,9 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FRotator BoostRotationRate;
 
+	UPROPERTY()
+	bool IsAssertBoostLaunch;
+
 	
 	
 	// camera variance
@@ -173,5 +179,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	float FlyingGravity;
 
+	UPROPERTY(EditAnywhere)
+	float MouseSensitivity;
 };
 

@@ -9,8 +9,11 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "FrameTypes.h"
 #include "InputActionValue.h"
+#include "InteractiveToolManager.h"
 #include "BaseGizmos/GizmoElementArrow.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Math/UnitConversion.h"
 #include "Rendering/RenderCommandPipes.h"
 
@@ -115,13 +118,14 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsMove = false;
 	IsBoostOn = false;
-	IsAssertBoostOn = false;
 	
 	CanQuickBoost = true;
-	QuickBoostTrigger = false;
+	IsQuickBoostTrigger = false;
 	QuickBoostSpeed = 4000.0f;
 	QuickBoostCameraLagSpeed = 3.5f;
 
+	IsAssertBoostOn = false;
+	IsAssertBoostLaunch = false;
 
 	BoostSpeed = 600.0f;
 	BoostRotationRate = FRotator(0,150,0);
@@ -129,6 +133,8 @@ void AArmoredCoreCharacter::BeginPlay()
 
 	BaseGravity = 1.75f;
 	FlyingGravity = 0.1f;
+
+	MouseSensitivity = 1.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -195,14 +201,19 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	}
 
 	CheckBoostOn();
-	CheckCameraLag();
+	CheckCamera();
 	SetQuickBoostSpeed();
 
 	if (IsAssertBoostOn)
 	{
 		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
+		FRotator ControlRotation = GetControlRotation();
+		FRotator YawRotation(0, ControlRotation.Yaw,0);
+		SetActorRotation(YawRotation);
 		AssertBoostDir.Normalize();
-		AddMovementInput(AssertBoostDir, 1000.0f,false);
+
+		if (IsAssertBoostLaunch)
+			AddMovementInput(AssertBoostDir,1000.0f,true);
 	}
 }
 
@@ -249,8 +260,8 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput(LookAxisVector.X * MouseSensitivity);
+		AddControllerPitchInput(LookAxisVector.Y * MouseSensitivity);
 	}
 }
 
@@ -264,7 +275,7 @@ void AArmoredCoreCharacter::QuickBoost()
 {
 	if (CanQuickBoost)
 	{
-		QuickBoostTrigger = true;
+		IsQuickBoostTrigger = true;
 
 		if (IsMove)
 		{
@@ -298,23 +309,23 @@ void AArmoredCoreCharacter::CheckBoostOn()
 	}
 }
 
-void AArmoredCoreCharacter::CheckCameraLag()
+void AArmoredCoreCharacter::CheckCamera()
 {
 	// 퀵 부스트 사용 시, 플레이어의 몸이 먼저 이동하고 카메라가 따라가는 걸 구현 하기 위한 함수
 	// 카메라 Lag speed를 조정해서 구현
-	if (QuickBoostTrigger)
+	if (IsQuickBoostTrigger)
 	{
 		//임의로 카메라 lag의 원래속도로의 복구속도를 3.0 * deltatime으로 설정해놓음
 		CameraBoom->CameraLagSpeed += (3.0f * GetWorld()->DeltaTimeSeconds);
 		if (IsBoostOn)
 		{
 			if (CameraBoom->CameraLagSpeed > BoostCameraLagSpeed)
-				QuickBoostTrigger = false;
+				IsQuickBoostTrigger = false;
 		}
 		else
 		{
 			if (CameraBoom->CameraLagSpeed > WalkCameraLagSpeed)
-				QuickBoostTrigger = false;
+				IsQuickBoostTrigger = false;
 		}
 	}
 	else
@@ -324,6 +335,19 @@ void AArmoredCoreCharacter::CheckCameraLag()
 		else
 			CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
 	}
+
+	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
+	if (IsAssertBoostOn)
+	{
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,0),GetWorld()->GetDeltaSeconds(), 3.0f);
+		CameraBoom->SocketOffset = newSocket;
+	}
+	else
+	{
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
+		CameraBoom->SocketOffset = newSocket;
+	}
+	
 }
 
 void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
@@ -337,7 +361,7 @@ void AArmoredCoreCharacter::Fly()
 	IsBoostOn = true;
 	if (GetCharacterMovement()->IsFlying())
 	{
-		AddMovementInput(GetActorUpVector(),1,false);
+		AddMovementInput(GetActorUpVector(),1,true);
 	}
 	else
 	{
@@ -366,19 +390,34 @@ void AArmoredCoreCharacter::AssertBoost()
 	IsAssertBoostOn = !IsAssertBoostOn;
 	if (IsAssertBoostOn)
 	{
+		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::AssertBoostStartLaunch,0.3f,false);
 		IsMove = true;
 		IsBoostOn = true;
 		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		GetCharacterMovement()->GravityScale = FlyingGravity;
+
+		// 플레이어가 컨트롤러에 의해 로테이션 하는 기능을 막고 카메라가 향하는 방향으로 로테이션을 돌리도록 변경
+		// 카메라 offset 변경
 		GetCharacterMovement()->bOrientRotationToMovement = false;
+		MouseSensitivity = 0.1f;
+
 	}
 	else
 	{
+		IsAssertBoostLaunch = false;
 		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->GravityScale = BaseGravity;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		MouseSensitivity = 1.0f;
 	}
 }
+
+void AArmoredCoreCharacter::AssertBoostStartLaunch()
+{
+	IsAssertBoostLaunch = true;
+	ACharacter::LaunchCharacter(AssertBoostDir * 1500.0f,true,true);
+}
+
 
 
 
