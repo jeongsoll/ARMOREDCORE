@@ -105,6 +105,9 @@ protected:
 	void AssertBoostStartLaunch();
 
 	void CheckAssertBoostOn();
+
+	void CheckBoostGauge();
+
 	
 	
 protected:
@@ -162,6 +165,15 @@ public:
 
 	UPROPERTY()
 	bool IsAssertBoostLaunch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BoostGauge;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool IsBoostChargeStart;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float BoostUsedTime;
 
 	
 	

@@ -118,6 +118,13 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsMove = false;
 	IsBoostOn = false;
+
+	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
+	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
+	// 부스트를 회복한다.
+	BoostGauge = 100.0f;
+	IsBoostChargeStart = false;
+	BoostUsedTime = 0.0f;
 	
 	CanQuickBoost = true;
 	IsQuickBoostTrigger = false;
@@ -201,6 +208,7 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	}
 
 	CheckBoostOn();
+	CheckBoostGauge();
 	CheckCamera();
 	SetQuickBoostSpeed();
 	CheckAssertBoostOn();
@@ -266,8 +274,9 @@ void AArmoredCoreCharacter::QuickBoost()
 	{
 		IsQuickBoostTrigger = true;
 
-		if (IsMove)
+		if (IsMove && BoostGauge > 0)
 		{
+			BoostGauge -= 10.0f;
 			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
 				GetCharacterMovement()->GravityScale = FlyingGravity;
 			IsBoostOn = true;
@@ -275,6 +284,7 @@ void AArmoredCoreCharacter::QuickBoost()
 
 			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
 			CanQuickBoost = false;
+			BoostUsedTime = 0.0f;
 			//퀵부스트 쿨타임 0.5초로 하드코딩
 			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.65f,false);
 		}
@@ -387,10 +397,10 @@ void AArmoredCoreCharacter::AssertBoost()
 		// 카메라 offset 변경
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		MouseSensitivity = 0.1f;
-
 	}
 	else
 	{
+		// 어썰트 부스트를 중간에 끊었을 때를 방지하기 위한 코드
 		IsAssertBoostLaunch = false;
 		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->GravityScale = BaseGravity;
@@ -419,10 +429,63 @@ void AArmoredCoreCharacter::CheckAssertBoostOn()
 		{
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			GetCharacterMovement()->GravityScale = FlyingGravity;
-			AddMovementInput(AssertBoostDir,1500.0f,true);
+			AddMovementInput(AssertBoostDir,2.0f,true);
+		}
+	}
+	else
+	{
+		if (IsAssertBoostLaunch)
+		{
+			// 어썰트 부스트를 부스트 게이지 만큼 다 사용한 후 부스트가 꺼질 때를 위한 코드
+			IsAssertBoostLaunch = false;
+			GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+			GetCharacterMovement()->GravityScale = BaseGravity;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+			MouseSensitivity = 1.0f;
 		}
 	}
 }
+
+void AArmoredCoreCharacter::CheckBoostGauge()
+{
+	if (BoostUsedTime >= 3.0f)
+	{
+		if (BoostGauge < 100.0f &&
+			!GetCharacterMovement()->IsFlying() &&
+			!GetCharacterMovement()->IsFalling())
+			IsBoostChargeStart = true;
+	}
+	else
+		BoostUsedTime += GetWorld()->GetDeltaSeconds();
+
+	// 비행 상태일때 부스트 게이지 관리
+	if (GetCharacterMovement()->IsFlying() && BoostGauge > 0)
+	{
+		BoostUsedTime = 0.0f;
+		if (IsAssertBoostOn)
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 10.0f;
+		else
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 5.0f;
+	}
+	else if (BoostGauge < 0)
+	{
+		BoostGauge = 0.0f;
+		IsAssertBoostOn = false;
+	}
+
+	if (IsBoostChargeStart)
+	{
+		if (BoostGauge < 100.0f)
+			BoostGauge += GetWorld()->GetDeltaSeconds() * 20.0f;
+		else
+		{
+			BoostGauge = 100.0f;
+			IsBoostChargeStart = false;
+		}
+	}
+}
+
+
 
 
 
