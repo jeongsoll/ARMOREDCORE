@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ArmoredCoreCharacter.h"
+
+#include "Bullet.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -67,11 +69,19 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	Leg = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Leg"));
 	LArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LArm"));
 	RArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RArm"));
+
+	LArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("LArmFirePos"));
+	RArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RArmFirePos"));
 	
 	Body->SetupAttachment(GetMesh());
 	Leg->SetupAttachment(GetMesh());
 	LArm->SetupAttachment(GetMesh());
 	RArm->SetupAttachment(GetMesh());
+
+	LArmFirePos->SetupAttachment(LArm);
+	LArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
+	RArmFirePos->SetupAttachment(RArm);
+	RArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
 
 	if (Body and LArm and RArm and Leg)
 	{
@@ -118,6 +128,13 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsMove = false;
 	IsBoostOn = false;
+
+	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
+	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
+	// 부스트를 회복한다.
+	BoostGauge = 100.0f;
+	IsBoostChargeStart = false;
+	BoostUsedTime = 0.0f;
 	
 	CanQuickBoost = true;
 	IsQuickBoostTrigger = false;
@@ -170,6 +187,9 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(BoostOnAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::BoostOn);
 		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::QuickBoost);
 		EnhancedInputComponent->BindAction(AssertBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoost);
+
+		// Fire
+		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
 	}
 	else
 	{
@@ -201,20 +221,10 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	}
 
 	CheckBoostOn();
+	CheckBoostGauge();
 	CheckCamera();
 	SetQuickBoostSpeed();
-
-	if (IsAssertBoostOn)
-	{
-		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
-		FRotator ControlRotation = GetControlRotation();
-		FRotator YawRotation(0, ControlRotation.Yaw,0);
-		SetActorRotation(YawRotation);
-		AssertBoostDir.Normalize();
-
-		if (IsAssertBoostLaunch)
-			AddMovementInput(AssertBoostDir,1000.0f,true);
-	}
+	CheckAssertBoostOn();
 }
 
 void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
@@ -277,8 +287,9 @@ void AArmoredCoreCharacter::QuickBoost()
 	{
 		IsQuickBoostTrigger = true;
 
-		if (IsMove)
+		if (IsMove && BoostGauge > 0)
 		{
+			BoostGauge -= 10.0f;
 			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
 				GetCharacterMovement()->GravityScale = FlyingGravity;
 			IsBoostOn = true;
@@ -286,8 +297,9 @@ void AArmoredCoreCharacter::QuickBoost()
 
 			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
 			CanQuickBoost = false;
+			BoostUsedTime = 0.0f;
 			//퀵부스트 쿨타임 0.5초로 하드코딩
-			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.5f,false);
+			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.65f,false);
 		}
 	}
 }
@@ -339,7 +351,7 @@ void AArmoredCoreCharacter::CheckCamera()
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,0),GetWorld()->GetDeltaSeconds(), 3.0f);
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,-15),GetWorld()->GetDeltaSeconds(), 3.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
 	else
@@ -393,17 +405,15 @@ void AArmoredCoreCharacter::AssertBoost()
 		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::AssertBoostStartLaunch,0.3f,false);
 		IsMove = true;
 		IsBoostOn = true;
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		GetCharacterMovement()->GravityScale = FlyingGravity;
 
 		// 플레이어가 컨트롤러에 의해 로테이션 하는 기능을 막고 카메라가 향하는 방향으로 로테이션을 돌리도록 변경
 		// 카메라 offset 변경
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		MouseSensitivity = 0.1f;
-
 	}
 	else
 	{
+		// 어썰트 부스트를 중간에 끊었을 때를 방지하기 위한 코드
 		IsAssertBoostLaunch = false;
 		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->GravityScale = BaseGravity;
@@ -415,8 +425,104 @@ void AArmoredCoreCharacter::AssertBoost()
 void AArmoredCoreCharacter::AssertBoostStartLaunch()
 {
 	IsAssertBoostLaunch = true;
-	ACharacter::LaunchCharacter(AssertBoostDir * 1500.0f,true,true);
+	ACharacter::LaunchCharacter(AssertBoostDir * 1000.0f,true,true);
 }
+
+void AArmoredCoreCharacter::CheckAssertBoostOn()
+{
+	if (IsAssertBoostOn)
+	{
+		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
+		AssertBoostDir.Normalize();
+		FRotator ControlRotation = GetControlRotation();
+		FRotator YawRotation(0, ControlRotation.Yaw,0);
+		SetActorRotation(YawRotation);
+
+		if (IsAssertBoostLaunch)
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCharacterMovement()->GravityScale = FlyingGravity;
+			AddMovementInput(AssertBoostDir,2.0f,true);
+		}
+	}
+	else
+	{
+		if (IsAssertBoostLaunch)
+		{
+			// 어썰트 부스트를 부스트 게이지 만큼 다 사용한 후 부스트가 꺼질 때를 위한 코드
+			IsAssertBoostLaunch = false;
+			GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+			GetCharacterMovement()->GravityScale = BaseGravity;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+			MouseSensitivity = 1.0f;
+		}
+	}
+}
+
+void AArmoredCoreCharacter::CheckBoostGauge()
+{
+	if (BoostUsedTime >= 3.0f)
+	{
+		if (BoostGauge < 100.0f &&
+			!GetCharacterMovement()->IsFlying() &&
+			!GetCharacterMovement()->IsFalling())
+			IsBoostChargeStart = true;
+	}
+	else
+		BoostUsedTime += GetWorld()->GetDeltaSeconds();
+
+	// 비행 상태일때 부스트 게이지 관리
+	if (GetCharacterMovement()->IsFlying() && BoostGauge > 0)
+	{
+		BoostUsedTime = 0.0f;
+		if (IsAssertBoostOn)
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 10.0f;
+		else
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 5.0f;
+	}
+	else if (BoostGauge < 0)
+	{
+		BoostGauge = 0.0f;
+		IsAssertBoostOn = false;
+	}
+
+	if (IsBoostChargeStart)
+	{
+		if (BoostGauge < 100.0f)
+			BoostGauge += GetWorld()->GetDeltaSeconds() * 20.0f;
+		else
+		{
+			BoostGauge = 100.0f;
+			IsBoostChargeStart = false;
+		}
+	}
+}
+
+void AArmoredCoreCharacter::MakeBullet()
+{
+	FTransform transform = LArmFirePos->GetComponentTransform();
+	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+}
+
+void AArmoredCoreCharacter::FirePressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
+	FVector FireDir = FollowCamera->GetForwardVector();
+	FireDir.Normalize();
+	FTransform transform = LArmFirePos->GetComponentTransform();
+	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+
+	FRotator ControlRotation = GetControlRotation();
+	FRotator YawRotation(0, ControlRotation.Yaw,0);
+	SetActorRotation(YawRotation);
+	Projectile->FireInDirection(FireDir);
+}
+
+
+
+
+
+
 
 
 

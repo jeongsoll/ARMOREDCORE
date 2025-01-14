@@ -19,19 +19,7 @@ UCLASS(config=Game)
 class AArmoredCoreCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Body;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Leg;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* LArm;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* RArm;
-
+	
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -66,6 +54,9 @@ class AArmoredCoreCharacter : public ACharacter
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AssertBoostAction;
 
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* LArmFireAction;
+	
 public:
 	AArmoredCoreCharacter();
 	
@@ -103,7 +94,16 @@ protected:
 
 	FTimerHandle AssertBoostLaunchHandle;
 	void AssertBoostStartLaunch();
-	
+
+	void CheckAssertBoostOn();
+
+	void CheckBoostGauge();
+
+	// attack function
+	void MakeBullet();
+
+	void FirePressed();
+
 	
 protected:
 	// APawn interface
@@ -121,6 +121,27 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 public:
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* Body;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* Leg;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* LArm;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* RArm;
+
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* LArmFirePos;
+
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* RArmFirePos;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ABullet> BulletFactory;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool IsMove;
 
@@ -160,6 +181,15 @@ public:
 
 	UPROPERTY()
 	bool IsAssertBoostLaunch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BoostGauge;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool IsBoostChargeStart;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float BoostUsedTime;
 
 	
 	
