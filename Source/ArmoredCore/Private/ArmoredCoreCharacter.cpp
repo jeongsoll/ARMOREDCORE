@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ArmoredCoreCharacter.h"
+
+#include "Bullet.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -67,11 +69,19 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	Leg = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Leg"));
 	LArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LArm"));
 	RArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RArm"));
+
+	LArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("LArmFirePos"));
+	RArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RArmFirePos"));
 	
 	Body->SetupAttachment(GetMesh());
 	Leg->SetupAttachment(GetMesh());
 	LArm->SetupAttachment(GetMesh());
 	RArm->SetupAttachment(GetMesh());
+
+	LArmFirePos->SetupAttachment(LArm);
+	LArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
+	RArmFirePos->SetupAttachment(RArm);
+	RArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
 
 	if (Body and LArm and RArm and Leg)
 	{
@@ -177,6 +187,9 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(BoostOnAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::BoostOn);
 		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::QuickBoost);
 		EnhancedInputComponent->BindAction(AssertBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoost);
+
+		// Fire
+		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
 	}
 	else
 	{
@@ -420,10 +433,10 @@ void AArmoredCoreCharacter::CheckAssertBoostOn()
 	if (IsAssertBoostOn)
 	{
 		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
+		AssertBoostDir.Normalize();
 		FRotator ControlRotation = GetControlRotation();
 		FRotator YawRotation(0, ControlRotation.Yaw,0);
 		SetActorRotation(YawRotation);
-		AssertBoostDir.Normalize();
 
 		if (IsAssertBoostLaunch)
 		{
@@ -484,6 +497,28 @@ void AArmoredCoreCharacter::CheckBoostGauge()
 		}
 	}
 }
+
+void AArmoredCoreCharacter::MakeBullet()
+{
+	FTransform transform = LArmFirePos->GetComponentTransform();
+	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+}
+
+void AArmoredCoreCharacter::FirePressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
+	FVector FireDir = FollowCamera->GetForwardVector();
+	FireDir.Normalize();
+	FTransform transform = LArmFirePos->GetComponentTransform();
+	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+
+	FRotator ControlRotation = GetControlRotation();
+	FRotator YawRotation(0, ControlRotation.Yaw,0);
+	SetActorRotation(YawRotation);
+	Projectile->FireInDirection(FireDir);
+}
+
+
 
 
 
