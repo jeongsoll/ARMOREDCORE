@@ -50,13 +50,16 @@ ABullet::ABullet()
 void ABullet::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	LifeTime = 8.0f;
 }
 
 // Called every frame
 void ABullet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	CurrentTime += DeltaTime;
+	if (CurrentTime > LifeTime)
+		this->Destroy();
 }
 
 void ABullet::FireInDirection(const FVector& ShootDirection)

@@ -42,8 +42,8 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
@@ -128,6 +128,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsMove = false;
 	IsBoostOn = false;
+	IsAttacking = false;
 
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
 	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
@@ -138,8 +139,9 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	CanQuickBoost = true;
 	IsQuickBoostTrigger = false;
-	QuickBoostSpeed = 4000.0f;
+	QuickBoostSpeed = 1000.0f;
 	QuickBoostCameraLagSpeed = 3.5f;
+	QuickBoostCoolTime = 0.65f;
 
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
@@ -172,7 +174,7 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Ongoing, this, &AArmoredCoreCharacter::Fly);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::StopJumping);
 
@@ -188,8 +190,10 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::QuickBoost);
 		EnhancedInputComponent->BindAction(AssertBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoost);
 
-		// Fire
+		// LArmFire
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
+		//EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Ongoing, this, &AArmoredCoreCharacter::FireOnGoing);
+		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::FireReleased);
 	}
 	else
 	{
@@ -220,11 +224,12 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	CheckBoostOn();
-	CheckBoostGauge();
-	CheckCamera();
-	SetQuickBoostSpeed();
-	CheckAssertBoostOn();
+	UpdateCameraSettingsByMovementState();
+	UpdateBoostState();
+	UpdateBoostGauge();
+	UpdateAssertBoostOnOff();
+	ToggleRotationToMovement();
+	UpdateAttackState();
 }
 
 void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
@@ -246,8 +251,8 @@ void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		AddMovementInput(ForwardDirection, MovementVector.Y, true);
+		AddMovementInput(RightDirection, MovementVector.X, true);
 
 		QuickBoostDir = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
 		QuickBoostDir.Normalize();
@@ -257,8 +262,11 @@ void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 
 void AArmoredCoreCharacter::OnMoveComplete()
 {
-	IsMove = false;
-	IsBoostOn = false;
+	if (!GetCharacterMovement()->IsFalling() || !GetCharacterMovement()->IsFlying() || !GetCharacterMovement()->IsWalking())
+	{
+		IsMove = false;
+		IsBoostOn = false;
+	}
 }
 
 
@@ -293,18 +301,19 @@ void AArmoredCoreCharacter::QuickBoost()
 			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
 				GetCharacterMovement()->GravityScale = FlyingGravity;
 			IsBoostOn = true;
-			ACharacter::LaunchCharacter(QuickBoostDir * QuickBoostSpeed,true,true);
+			FVector newVelocity = QuickBoostSpeed * QuickBoostDir;
+			newVelocity += GetActorUpVector() * 500.0f;
+			ACharacter::LaunchCharacter(newVelocity,true,true);
 
 			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
 			CanQuickBoost = false;
 			BoostUsedTime = 0.0f;
-			//퀵부스트 쿨타임 0.5초로 하드코딩
-			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,0.65f,false);
+			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,QuickBoostCoolTime,false);
 		}
 	}
 }
 
-void AArmoredCoreCharacter::CheckBoostOn()
+void AArmoredCoreCharacter::UpdateBoostState()
 {
 	if (!IsMove && GetCharacterMovement()->IsWalking() && IsBoostOn)
 		IsBoostOn = false;
@@ -321,27 +330,39 @@ void AArmoredCoreCharacter::CheckBoostOn()
 	}
 }
 
-void AArmoredCoreCharacter::CheckCamera()
+void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 {
 	// 퀵 부스트 사용 시, 플레이어의 몸이 먼저 이동하고 카메라가 따라가는 걸 구현 하기 위한 함수
 	// 카메라 Lag speed를 조정해서 구현
+
 	if (IsQuickBoostTrigger)
 	{
-		//임의로 카메라 lag의 원래속도로의 복구속도를 3.0 * deltatime으로 설정해놓음
+		//카메라 lag의 원래속도로의 복구속도를 3.0 * deltatime으로 설정해놓음
+		UE_LOG(LogTemp,Warning,TEXT("CameraLag Speed : %f"), CameraBoom->CameraLagSpeed);
+
 		CameraBoom->CameraLagSpeed += (3.0f * GetWorld()->DeltaTimeSeconds);
+
+		//카메라 lag speed가 원래 속도로 돌아오면 quickboosttrigger를 false처리
+		//카메라 lag 속도의 부스트 on인 속도와 walk속도가 다름
+		//if를 통해 boost, walk 속도만큼 cameralagspeed가 올라왔으면 bool값을 false처리하여 속도를 그만 더하게함
 		if (IsBoostOn)
 		{
 			if (CameraBoom->CameraLagSpeed > BoostCameraLagSpeed)
+			{
 				IsQuickBoostTrigger = false;
+			}
 		}
 		else
 		{
 			if (CameraBoom->CameraLagSpeed > WalkCameraLagSpeed)
+			{
 				IsQuickBoostTrigger = false;
+			}
 		}
 	}
 	else
 	{
+		// deltatime으로 인해 애매하게 올라간 값 처리
 		if (IsBoostOn)
 			CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
 		else
@@ -368,26 +389,33 @@ void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
 	CanQuickBoost = true;
 }
 
-void AArmoredCoreCharacter::Fly()
+void AArmoredCoreCharacter::Jump()
 {
-	IsBoostOn = true;
-	if (GetCharacterMovement()->IsFlying())
-	{
-		AddMovementInput(GetActorUpVector(),1,true);
-	}
-	else
-	{
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	}
+	Super::Jump();
+	UE_LOG(LogTemp,Warning,TEXT("jumping"));
 }
 
-void AArmoredCoreCharacter::SetQuickBoostSpeed()
+
+void AArmoredCoreCharacter::Fly()
 {
-	// fly 상태일 때 launch character로 인해 전진하는 값이 다르기에 따로 설정해주기 위한 함수
-	if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
-		QuickBoostSpeed = 1700.0f;
+	UE_LOG(LogTemp,Warning,TEXT("flying"));
+	IsBoostOn = true;
+
+	if (BoostGauge > 0)
+	{
+		if (GetCharacterMovement()->IsFlying())
+		{
+			AddMovementInput(GetActorUpVector(),1,true);
+		}
+		else
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		}
+	}
 	else
-		QuickBoostSpeed = 4000.0f;
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	}
 }
 
 void AArmoredCoreCharacter::StopJumping()
@@ -402,13 +430,12 @@ void AArmoredCoreCharacter::AssertBoost()
 	IsAssertBoostOn = !IsAssertBoostOn;
 	if (IsAssertBoostOn)
 	{
-		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::AssertBoostStartLaunch,0.3f,false);
+		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
 		IsMove = true;
 		IsBoostOn = true;
 
 		// 플레이어가 컨트롤러에 의해 로테이션 하는 기능을 막고 카메라가 향하는 방향으로 로테이션을 돌리도록 변경
 		// 카메라 offset 변경
-		GetCharacterMovement()->bOrientRotationToMovement = false;
 		MouseSensitivity = 0.1f;
 	}
 	else
@@ -417,22 +444,21 @@ void AArmoredCoreCharacter::AssertBoost()
 		IsAssertBoostLaunch = false;
 		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->GravityScale = BaseGravity;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		MouseSensitivity = 1.0f;
 	}
 }
 
-void AArmoredCoreCharacter::AssertBoostStartLaunch()
+void AArmoredCoreCharacter::StartAssertBoostLaunch()
 {
 	IsAssertBoostLaunch = true;
 	ACharacter::LaunchCharacter(AssertBoostDir * 1000.0f,true,true);
 }
 
-void AArmoredCoreCharacter::CheckAssertBoostOn()
+void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
 {
 	if (IsAssertBoostOn)
 	{
-		AssertBoostDir = FollowCamera->GetForwardVector() + FollowCamera->GetRightVector();
+		AssertBoostDir = FollowCamera->GetForwardVector();
 		AssertBoostDir.Normalize();
 		FRotator ControlRotation = GetControlRotation();
 		FRotator YawRotation(0, ControlRotation.Yaw,0);
@@ -450,17 +476,19 @@ void AArmoredCoreCharacter::CheckAssertBoostOn()
 		if (IsAssertBoostLaunch)
 		{
 			// 어썰트 부스트를 부스트 게이지 만큼 다 사용한 후 부스트가 꺼질 때를 위한 코드
+			// IsAssertBoostOn 이 false면 이 부분이 계속 불리기 때문에 오류가 생김
+			// 그렇기에 IsAssertBoostLaunch도 어차피 false로 바꿔야 하니 그전에 아래 코드를 수행하게함
 			IsAssertBoostLaunch = false;
 			GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 			GetCharacterMovement()->GravityScale = BaseGravity;
-			GetCharacterMovement()->bOrientRotationToMovement = true;
 			MouseSensitivity = 1.0f;
 		}
 	}
 }
 
-void AArmoredCoreCharacter::CheckBoostGauge()
+void AArmoredCoreCharacter::UpdateBoostGauge()
 {
+	//UE_LOG(LogTemp,Warning,TEXT("boostgauge : %f"),BoostGauge);
 	if (BoostUsedTime >= 3.0f)
 	{
 		if (BoostGauge < 100.0f &&
@@ -476,9 +504,9 @@ void AArmoredCoreCharacter::CheckBoostGauge()
 	{
 		BoostUsedTime = 0.0f;
 		if (IsAssertBoostOn)
-			BoostGauge -= GetWorld()->GetDeltaSeconds() * 10.0f;
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 15.0f;
 		else
-			BoostGauge -= GetWorld()->GetDeltaSeconds() * 5.0f;
+			BoostGauge -= GetWorld()->GetDeltaSeconds() * 10.0f;
 	}
 	else if (BoostGauge < 0)
 	{
@@ -498,25 +526,78 @@ void AArmoredCoreCharacter::CheckBoostGauge()
 	}
 }
 
-void AArmoredCoreCharacter::MakeBullet()
+void AArmoredCoreCharacter::UpdateAttackState()
 {
-	FTransform transform = LArmFirePos->GetComponentTransform();
-	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+	if (IsAttacking)
+	{
+		AimDirection = FollowCamera->GetForwardVector();
+		AimDirection.Normalize();
+		RotateCharacterToAimDirection();
+	}
 }
+
+
+void AArmoredCoreCharacter::MakeProjectile()
+{
+	// TODO
+	// bool 변수를 만들어서 왼쪽무기, 오른쪽무기, 오른쪽 어깨 중에 어떤 무기의 발사체를 발사하는지 확인하기
+	UE_LOG(LogTemp, Warning, TEXT("MakeBullet"));
+	FTransform transform = LArmFirePos->GetComponentTransform();
+	ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+	check(projectile);
+	projectile->FireInDirection(AimDirection);
+}
+
 
 void AArmoredCoreCharacter::FirePressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
-	FVector FireDir = FollowCamera->GetForwardVector();
-	FireDir.Normalize();
-	FTransform transform = LArmFirePos->GetComponentTransform();
-	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+	if (!IsAssertBoostOn)
+	{
+		IsAttacking = true;
+		if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
+		{
+			GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,this,&AArmoredCoreCharacter::MakeProjectile,0.3f,true);
+		}
+	}
+}
 
+void AArmoredCoreCharacter::FireOnGoing()
+{
+	UE_LOG(LogTemp, Warning, TEXT("FireOnGoing"));
+}
+
+
+void AArmoredCoreCharacter::FireReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("FireReleased"));
+	if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
+	}
+	IsAttacking = false;
+}
+
+
+
+void AArmoredCoreCharacter::RotateCharacterToAimDirection()
+{
 	FRotator ControlRotation = GetControlRotation();
 	FRotator YawRotation(0, ControlRotation.Yaw,0);
-	SetActorRotation(YawRotation);
-	Projectile->FireInDirection(FireDir);
+	FRotator newRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(),YawRotation,GetWorld()->GetDeltaSeconds(),5.0f);
+	SetActorRotation(newRotation);
 }
+
+void AArmoredCoreCharacter::ToggleRotationToMovement()
+{
+	// Tick에서 controller input에 따른 rotation 관리 설정을 할지 안할지에 대한 함수
+	if (IsAttacking || IsAssertBoostOn)
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	else
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+
 
 
 
