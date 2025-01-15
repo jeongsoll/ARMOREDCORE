@@ -28,11 +28,17 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
+	void FireInDirection(const FVector& ShootDirection);
+	
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* Root;
 
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* Mesh;
 
-	void FireInDirection(const FVector& ShootDirection);
+	UPROPERTY(EditAnywhere)
+	float LifeTime;
+
+	UPROPERTY(EditAnywhere)
+	float CurrentTime;
 };
