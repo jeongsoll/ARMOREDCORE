@@ -57,6 +57,12 @@ class AArmoredCoreCharacter : public ACharacter
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
 	
+	FTimerHandle QuickBoostCoolTimeHandle;
+	
+	FTimerHandle AssertBoostLaunchHandle;
+
+	FTimerHandle LArmFireTimerHandle;
+
 public:
 	AArmoredCoreCharacter();
 	
@@ -71,38 +77,41 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
+	void ToggleRotationToMovement();
+
 	// Boost Function
-			
 	void BoostOn();
 
 	void QuickBoost();
 
-	void CheckBoostOn();
+	void UpdateBoostState();
 
-	void CheckCamera();
+	void UpdateCameraSettingsByMovementState();
 
-	FTimerHandle QuickBoostCoolTimeHandle;
 	void ResetQuickBoostCoolTime();
 
 	void Fly();
 
-	void SetQuickBoostSpeed();
-
-	virtual void StopJumping() override;
-
 	void AssertBoost();
 
-	FTimerHandle AssertBoostLaunchHandle;
-	void AssertBoostStartLaunch();
+	void StartAssertBoostLaunch();
 
-	void CheckAssertBoostOn();
+	void UpdateAssertBoostOnOff();
 
-	void CheckBoostGauge();
+	void UpdateBoostGauge();
 
 	// attack function
-	void MakeBullet();
+	void UpdateAttackState();
 
+	void MakeProjectile();
+	
 	void FirePressed();
+
+	void FireOnGoing();
+
+	void FireReleased();
+
+	void RotateCharacterToAimDirection();
 
 	
 protected:
@@ -114,6 +123,10 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void Jump() override;
+	
+	virtual void StopJumping() override;
+	
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -142,20 +155,20 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ABullet> BulletFactory;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	bool IsMove;
-
+	
 	// Boost Variance
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	bool IsBoostOn;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	bool IsAssertBoostOn;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	bool CanQuickBoost;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	bool IsQuickBoostTrigger;
 	
 	UPROPERTY(EditAnywhere)
@@ -166,6 +179,9 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float QuickBoostSpeed;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float QuickBoostCoolTime;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float WalkSpeed;
@@ -179,7 +195,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FRotator BoostRotationRate;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	bool IsAssertBoostLaunch;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -191,13 +207,15 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float BoostUsedTime;
 
-	
+	// attack variance
+	UPROPERTY(EditAnywhere)
+	bool IsAttacking;
 	
 	// camera variance
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float WalkCameraLagSpeed;
 	
-	UPROPERTY(editAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float BoostCameraLagSpeed;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -209,7 +227,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	float FlyingGravity;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float MouseSensitivity;
+
+	UPROPERTY(EditAnywhere)
+	FVector AimDirection;
 };
 
