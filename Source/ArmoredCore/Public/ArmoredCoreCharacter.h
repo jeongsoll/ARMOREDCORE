@@ -76,8 +76,22 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+	
+	// APawn interface
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	// To add mapping context
+	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void Jump() override;
+	
+	virtual void StopJumping() override;
+	
 	void ToggleRotationToMovement();
+
+	void LerpRotateCameraByMoveInput();
 
 	// Boost Function
 	void BoostOn();
@@ -113,27 +127,15 @@ protected:
 
 	void RotateCharacterToAimDirection();
 
-	
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// To add mapping context
-	virtual void BeginPlay() override;
-
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void Jump() override;
-	
-	virtual void StopJumping() override;
+private:
+	FVector2D MovementVector;
 	
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-public:
+	
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* Body;
 

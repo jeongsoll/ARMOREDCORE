@@ -130,6 +130,15 @@ void AArmoredCoreCharacter::BeginPlay()
 	IsBoostOn = false;
 	IsAttacking = false;
 
+	BaseGravity = 1.75f;
+	FlyingGravity = 0.1f;
+
+	MouseSensitivity = 1.0f;
+	
+	BoostSpeed = 600.0f;
+	BoostRotationRate = FRotator(0,150,0);
+	BoostCameraLagSpeed = 8.0f;
+	
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
 	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
 	// 부스트를 회복한다.
@@ -139,21 +148,14 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	CanQuickBoost = true;
 	IsQuickBoostTrigger = false;
-	QuickBoostSpeed = 1000.0f;
+	QuickBoostSpeed = 1500.0f;
 	QuickBoostCameraLagSpeed = 3.5f;
 	QuickBoostCoolTime = 0.65f;
 
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
 
-	BoostSpeed = 600.0f;
-	BoostRotationRate = FRotator(0,150,0);
-	BoostCameraLagSpeed = 8.0f;
 
-	BaseGravity = 1.75f;
-	FlyingGravity = 0.1f;
-
-	MouseSensitivity = 1.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -234,8 +236,9 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 
 void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 {
+	//UE_LOG(LogTemp,Warning,TEXT("move in"));
 	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -253,7 +256,7 @@ void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y, true);
 		AddMovementInput(RightDirection, MovementVector.X, true);
-
+		
 		QuickBoostDir = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
 		QuickBoostDir.Normalize();
 		
@@ -262,6 +265,7 @@ void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 
 void AArmoredCoreCharacter::OnMoveComplete()
 {
+	//UE_LOG(LogTemp,Warning,TEXT("move complete"));
 	if (!GetCharacterMovement()->IsFalling() || !GetCharacterMovement()->IsFlying() || !GetCharacterMovement()->IsWalking())
 	{
 		IsMove = false;
@@ -283,6 +287,45 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
+{
+	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
+	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
+	FRotator newRotator;
+
+	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
+	if (CanQuickBoost)
+	{
+		// 퀵 부스트를 사용한 후에 Trigger bool값이 몇초 뒤에 false로 변함
+		// 이를 이용해서 퀵부스트로 변경된 회전값을 0 0 0 으로 빠른 회복을 위한 코드
+		if (IsQuickBoostTrigger)
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+
+		// 부스트 이동을 하는 상태이고 퀵부스트가 끝났으면
+		// 카메라를 천천히 회전해라
+		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator, GetWorld()->GetDeltaSeconds(), 0.25f);
+		}
+
+		// 이동을 멈췄으면
+		// 카메라를 원상복구 시켜라
+		else
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+	}
+	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
+	else
+	{
+		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 3.0f, GetWorld()->GetDeltaSeconds(), 3.0f);
+	}	
+	FollowCamera->SetRelativeRotation(newRotator);
+}
+
+
 void AArmoredCoreCharacter::BoostOn()
 {
 	if (IsMove)
@@ -298,11 +341,15 @@ void AArmoredCoreCharacter::QuickBoost()
 		if (IsMove && BoostGauge > 0)
 		{
 			BoostGauge -= 10.0f;
-			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
-				GetCharacterMovement()->GravityScale = FlyingGravity;
 			IsBoostOn = true;
 			FVector newVelocity = QuickBoostSpeed * QuickBoostDir;
-			newVelocity += GetActorUpVector() * 500.0f;
+
+			// 바닥에 있는 상태일때는 퀵부스트에 UpVector를 더해주지 않기 위한 조건문
+			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
+				GetCharacterMovement()->GravityScale = FlyingGravity;
+			else
+				newVelocity += GetActorUpVector() * 500.0f;
+			
 			ACharacter::LaunchCharacter(newVelocity,true,true);
 
 			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
@@ -335,10 +382,13 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	// 퀵 부스트 사용 시, 플레이어의 몸이 먼저 이동하고 카메라가 따라가는 걸 구현 하기 위한 함수
 	// 카메라 Lag speed를 조정해서 구현
 
+	LerpRotateCameraByMoveInput();
+
+
 	if (IsQuickBoostTrigger)
 	{
 		//카메라 lag의 원래속도로의 복구속도를 3.0 * deltatime으로 설정해놓음
-		UE_LOG(LogTemp,Warning,TEXT("CameraLag Speed : %f"), CameraBoom->CameraLagSpeed);
+		//UE_LOG(LogTemp,Warning,TEXT("CameraLag Speed : %f"), CameraBoom->CameraLagSpeed);
 
 		CameraBoom->CameraLagSpeed += (3.0f * GetWorld()->DeltaTimeSeconds);
 
@@ -398,7 +448,7 @@ void AArmoredCoreCharacter::Jump()
 
 void AArmoredCoreCharacter::Fly()
 {
-	UE_LOG(LogTemp,Warning,TEXT("flying"));
+	//UE_LOG(LogTemp,Warning,TEXT("flying"));
 	IsBoostOn = true;
 
 	if (BoostGauge > 0)
@@ -551,7 +601,7 @@ void AArmoredCoreCharacter::MakeProjectile()
 
 void AArmoredCoreCharacter::FirePressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
+	//UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
 	if (!IsAssertBoostOn)
 	{
 		IsAttacking = true;
@@ -564,13 +614,13 @@ void AArmoredCoreCharacter::FirePressed()
 
 void AArmoredCoreCharacter::FireOnGoing()
 {
-	UE_LOG(LogTemp, Warning, TEXT("FireOnGoing"));
+	//UE_LOG(LogTemp, Warning, TEXT("FireOnGoing"));
 }
 
 
 void AArmoredCoreCharacter::FireReleased()
 {
-	UE_LOG(LogTemp, Warning, TEXT("FireReleased"));
+	//UE_LOG(LogTemp, Warning, TEXT("FireReleased"));
 	if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
