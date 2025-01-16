@@ -6,53 +6,63 @@
 #include <ThirdParty/Imath/Deploy/Imath-3.1.9/include/Imath/ImathPlatform.h>
 
 
-float UEasingFunction::ApplyEasing(EEasingType EasingType, float Time)
+float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha)
 {
 	switch (EasingType)
 	{
 	case EEasingType::EaseInQuint:
-		return EaseInQuint(Time);
+		return EaseInQuint(Alpha);
 	case EEasingType::EaseOutQuint:
-		return EaseOutQuint(Time);
+		return EaseOutQuint(Alpha);
 	case EEasingType::EaseInElastic:
-		return EaseInElastic(Time);
+		return EaseInElastic(Alpha);
 	case EEasingType::EaseOutElastic:
-		return EaseOutElastic(Time);
+		return EaseOutElastic(Alpha);
 	default:
-		return Time;
+		return Alpha;
 	}
 }
 
-float UEasingFunction::EaseInQuint(float Time)
+float UEasingFunction::UpdateEasedAlpha(EEasingType EasingType, float& ElapsedTime, float TransitionDuration)
 {
-	return Time * Time * Time * Time * Time;
+	float DeltaTime = GWorld->GetDeltaSeconds();
+	ElapsedTime += DeltaTime;
+
+	float Alpha = ElapsedTime / TransitionDuration;
+	if (Alpha >= 1.0f)
+	{
+		Alpha = 1.0f;
+	}
+
+	return GetEasedValue(EasingType, Alpha);
 }
 
-float UEasingFunction::EaseOutQuint(float Time)
+float UEasingFunction::EaseInQuint(float Alpha)
 {
-	return 1 - std::pow(1 - Time, 5); 
+	return FMath::Pow(Alpha, 5);
 }
 
-float UEasingFunction::EaseInElastic(float Time)
+float UEasingFunction::EaseOutQuint(float Alpha)
 {
-	const float c4 = (2 * M_PI) / 3;
-
-	if (Time == 0)
-		return 0;
-	if (Time == 1)
-		return 1;
-
-	return -std::pow(2, 10 * Time - 10) * std::sin((Time * 10 - 10.75) * c4);
+	return 1 - FMath::Pow(1 - Alpha, 5);
 }
 
-float UEasingFunction::EaseOutElastic(float Time)
+float UEasingFunction::EaseInElastic(float Alpha)
 {
-	const float c4 = (2 * M_PI) / 3;
+	const float c5 = (2 * PI) / 4.5f;
+	return Alpha == 0
+		? 0
+		: Alpha == 1
+		? 1
+		: -FMath::Pow(2, 10 * Alpha - 10) * FMath::Sin((Alpha * 10 - 10.75f) * c5);
+}
 
-	if (Time == 0)
-		return 0;
-	if (Time == 1)
-		return 1;
-
-	return std::pow(2, -10 * Time) * std::sin((Time * 10 - 0.75) * c4) + 1;
+float UEasingFunction::EaseOutElastic(float Alpha)
+{
+	const float c5 = (2 * PI) / 4.5f;
+	return Alpha == 0
+		? 0
+		: Alpha == 1
+		? 1
+		: FMath::Pow(2, -10 * Alpha) * FMath::Sin((Alpha * 10 - 0.75f) * c5) + 1;
 }

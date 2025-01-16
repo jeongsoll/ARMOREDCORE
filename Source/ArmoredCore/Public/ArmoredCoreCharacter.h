@@ -132,9 +132,10 @@ protected:
 	// ETC
 	void ToggleRotationToMovement();
 
+	void UpdateCameraSettingsByMovementState();
+	
 	void LerpRotateCameraByMoveInput();
 
-	void UpdateCameraSettingsByMovementState();
 	
 private:
 	FVector2D MovementVector;
@@ -236,5 +237,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
+
+	float ElapsedTime;
 };
 
