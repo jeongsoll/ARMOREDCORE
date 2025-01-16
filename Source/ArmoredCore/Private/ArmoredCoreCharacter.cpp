@@ -3,7 +3,6 @@
 #include "ArmoredCoreCharacter.h"
 
 #include "Bullet.h"
-#include "Easing.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -133,7 +132,8 @@ void AArmoredCoreCharacter::BeginPlay()
 	//QuickBoostCameraLagSpeed = 7.0f;
 	
 	IsMove = false;
-	IsJump = false;
+	IsJumping = false;
+	IsFlying = false;
 	IsAttacking = false;
 
 	BaseGravity = 1.75f;
@@ -456,14 +456,14 @@ void AArmoredCoreCharacter::Jump()
 		{
 			GetWorld()->GetTimerManager().ClearTimer(ToggleIsJumpTimerHandle);
 		}
-		IsJump = false;
+		IsJumping = false;
 		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.5f,false);
 	}
 }
 
 void AArmoredCoreCharacter::ToggleIsJump()
 {
-	IsJump = true;
+	IsJumping = true;
 }
 
 
@@ -471,7 +471,7 @@ void AArmoredCoreCharacter::Fly()
 {
 	IsBoostOn = true;
 
-	if (BoostGauge > 0 && IsJump)
+	if (BoostGauge > 0 && IsJumping)
 	{
 		if (GetCharacterMovement()->IsFlying())
 		{
@@ -479,7 +479,10 @@ void AArmoredCoreCharacter::Fly()
 			AddMovementInput(GetActorUpVector(),0.75,true);
 		}
 		else
+		{
+			IsFlying = true;
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		}
 	}
 	else
 	{

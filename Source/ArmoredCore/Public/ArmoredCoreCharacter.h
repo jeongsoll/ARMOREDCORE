@@ -171,7 +171,9 @@ public:
 	
 	FRotator WalkRotationRate;
 
-	bool IsJump;
+	bool IsJumping;
+
+	bool IsFlying;
 	
 	// Boost variance
 	bool IsBoostOn;
