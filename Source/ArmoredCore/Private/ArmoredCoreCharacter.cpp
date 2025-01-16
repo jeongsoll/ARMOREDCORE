@@ -137,6 +137,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	IsMove = false;
 	IsJumping = false;
 	IsFlying = false;
+	IsRending = false;
 	IsAttacking = false;
 
 	BaseGravity = 1.75f;
@@ -269,44 +270,6 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
-{
-	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
-	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
-	FRotator newRotator;
-
-	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
-	if (CanQuickBoost)
-	{
-		// 퀵 부스트를 사용한 후에 Trigger bool값이 몇초 뒤에 false로 변함
-		// 이를 이용해서 퀵부스트로 변경된 회전값을 0 0 0 으로 빠른 회복을 위한 코드
-		if (IsQuickBoostTrigger)
-		{
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
-		}
-
-		// 부스트 이동을 하는 상태이고 퀵부스트가 끝났으면
-		// 카메라를 천천히 회전해라
-		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
-		{
-			// lerpRotator가 (-1,0,1)의 값을 가지기 때문에 곱해준 값 만큼 카메라의 회전각도가 올라간다.
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 1.2f, GetWorld()->GetDeltaSeconds(), 0.2f);
-		}
-
-		// 이동을 멈췄으면
-		// 카메라를 원상복구 시켜라
-		else
-		{
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
-		}
-	}
-	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
-	else
-	{
-		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 2.5f, GetWorld()->GetDeltaSeconds(), 3.0f);
-	}	
-	FollowCamera->SetRelativeRotation(newRotator);
-}
 
 
 void AArmoredCoreCharacter::BoostOn()
@@ -380,6 +343,53 @@ void AArmoredCoreCharacter::UpdateBoostState()
 	}
 }
 
+void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
+{
+	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
+	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
+	FRotator newRotator;
+
+	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
+	if (CanQuickBoost)
+	{
+		// 퀵 부스트를 사용한 후에 Trigger bool값이 몇초 뒤에 false로 변함
+		// 이를 이용해서 퀵부스트로 변경된 회전값을 0 0 0 으로 빠른 회복을 위한 코드
+		if (IsQuickBoostTrigger)
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+
+		// 부스트 이동을 하는 상태이고 퀵부스트가 끝났으면
+		// 카메라를 천천히 회전해라
+		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
+		{
+			// lerpRotator가 (-1,0,1)의 값을 가지기 때문에 곱해준 값 만큼 카메라의 회전각도가 올라간다.
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 1.2f, GetWorld()->GetDeltaSeconds(), 0.2f);
+		}
+
+		// 이동을 멈췄으면
+		// 카메라를 원상복구 시켜라
+		else
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+	}
+	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
+	else
+	{
+		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 2.5f, GetWorld()->GetDeltaSeconds(), 3.0f);
+	}	
+	FollowCamera->SetRelativeRotation(newRotator);
+}
+
+void AArmoredCoreCharacter::LerpCameraOffsetByRending()
+{
+	RendingAlpha = UEasingFunction::UpdateEasedAlpha(EEasingType::EaseOutElastic,CurrentTime,100.0f,GetWorld()->GetDeltaSeconds());
+	
+	FVector newSocket = FMath::Lerp(CameraBoom->SocketOffset,FVector(0,0,0),RendingAlpha);
+	CameraBoom->SocketOffset = newSocket;
+}
+
 void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 {
 	// 플레이어 움직임 상태에 따른 카메라 lagSpeed, offset, rotation 설정
@@ -433,21 +443,21 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	else if (IsFlying)
 	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-45,0,-100),GetWorld()->GetDeltaSeconds(), 1.0f);
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-120),GetWorld()->GetDeltaSeconds(), 1.0f);
 		CameraBoom->SocketOffset = newSocket;
-	}
-	else if (!IsFlying && GetCharacterMovement()->IsFalling())
-	{
-		//FVector newSocket;
-		float alpha = UEasingFunction::UpdateEasedAlpha(EEasingType::EaseOutElastic,ElapsedTime,2.0f);
-		
-		
-		FVector newSocket = FMath::Lerp(CameraBoom->SocketOffset,FVector(0,0,0),alpha);
 	}
 	else
 	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
-		CameraBoom->SocketOffset = newSocket;
+		// todo
+		// 이 부분에 착지 시, 카메라 offset lerp를 하는 함수를 실행하다가
+		// bool값을 받아서 아래 코드를 실행하게 해야함
+		if (IsRending)
+			LerpCameraOffsetByRending();
+		else
+		{
+			FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
+			CameraBoom->SocketOffset = newSocket;
+		}
 	}
 }
 

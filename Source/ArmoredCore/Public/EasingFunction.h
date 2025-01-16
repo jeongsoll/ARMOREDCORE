@@ -39,7 +39,7 @@ private:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Easing")
 	static float GetEasedValue(EEasingType EasingType, float Alpha);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Easing")
-	static float UpdateEasedAlpha(EEasingType EasingType, float& ElapsedTime, float TransitionDuration);
+	static float UpdateEasedAlpha(EEasingType EasingType, float& CurrentTime, float TotalDuration, float DeltaTime);
 };

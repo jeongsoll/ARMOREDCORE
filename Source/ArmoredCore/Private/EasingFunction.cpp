@@ -23,12 +23,12 @@ float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha)
 	}
 }
 
-float UEasingFunction::UpdateEasedAlpha(EEasingType EasingType, float& ElapsedTime, float TransitionDuration)
+float UEasingFunction::UpdateEasedAlpha(EEasingType EasingType, float& CurrentTime, float TotalDuration, float DeltaTime)
 {
-	float DeltaTime = GWorld->GetDeltaSeconds();
-	ElapsedTime += DeltaTime;
+	
+	CurrentTime += DeltaTime;
 
-	float Alpha = ElapsedTime / TransitionDuration;
+	float Alpha = CurrentTime / TotalDuration;
 	if (Alpha >= 1.0f)
 	{
 		Alpha = 1.0f;
@@ -50,19 +50,35 @@ float UEasingFunction::EaseOutQuint(float Alpha)
 float UEasingFunction::EaseInElastic(float Alpha)
 {
 	const float c5 = (2 * PI) / 4.5f;
-	return Alpha == 0
-		? 0
-		: Alpha == 1
-		? 1
-		: -FMath::Pow(2, 10 * Alpha - 10) * FMath::Sin((Alpha * 10 - 10.75f) * c5);
+
+	if (Alpha == 0)
+	{
+		return 0;
+	}
+	else if (Alpha == 1)
+	{
+		return 1;
+	}
+	else
+	{
+		return -FMath::Pow(2, 10 * Alpha - 10) * FMath::Sin((Alpha * 10 - 10.75f) * c5);
+	}
 }
 
 float UEasingFunction::EaseOutElastic(float Alpha)
 {
 	const float c5 = (2 * PI) / 4.5f;
-	return Alpha == 0
-		? 0
-		: Alpha == 1
-		? 1
-		: FMath::Pow(2, -10 * Alpha) * FMath::Sin((Alpha * 10 - 0.75f) * c5) + 1;
+
+	if (Alpha == 0)
+	{
+		return 0;
+	}
+	else if (Alpha == 1)
+	{
+		return 1;
+	}
+	else
+	{
+		return FMath::Pow(2, -10 * Alpha) * FMath::Sin((Alpha * 10 - 0.75f) * c5) + 1;
+	}
 }

@@ -136,6 +136,8 @@ protected:
 	
 	void LerpRotateCameraByMoveInput();
 
+	void LerpCameraOffsetByRending();
+
 	
 private:
 	FVector2D MovementVector;
@@ -175,6 +177,8 @@ public:
 	bool IsJumping;
 
 	bool IsFlying;
+
+	bool IsRending;
 	
 	// Boost variance
 	bool IsBoostOn;
@@ -238,6 +242,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
 
-	float ElapsedTime;
+
+	// Rending Cam Offset variance
+	float RendingAlpha{0.0f};
+	float CurrentTime{0.0f};
 };
 
