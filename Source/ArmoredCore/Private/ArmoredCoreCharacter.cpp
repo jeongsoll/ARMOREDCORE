@@ -40,12 +40,13 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
-	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->JumpZVelocity = 700.0f;
+	GetCharacterMovement()->AirControl = 0.75f;
 	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.0f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+	GetCharacterMovement()->BrakingDecelerationFlying = 1500.0f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -121,10 +122,14 @@ void AArmoredCoreCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-	
+	GetCharacterMovement()->BrakingDecelerationFalling = test;
+
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	WalkRotationRate = GetCharacterMovement()->RotationRate;
+	
 	WalkCameraLagSpeed = CameraBoom->CameraLagSpeed;
+	BoostCameraLagSpeed = 8.0f;
+	//QuickBoostCameraLagSpeed = 7.0f;
 	
 	IsMove = false;
 	IsBoostOn = false;
@@ -137,7 +142,6 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	BoostSpeed = 600.0f;
 	BoostRotationRate = FRotator(0,150,0);
-	BoostCameraLagSpeed = 8.0f;
 	
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
 	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
@@ -148,8 +152,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	CanQuickBoost = true;
 	IsQuickBoostTrigger = false;
-	QuickBoostSpeed = 1500.0f;
-	QuickBoostCameraLagSpeed = 3.5f;
+	//QuickBoostSpeed = 1500.0f;
 	QuickBoostCoolTime = 0.65f;
 
 	IsAssertBoostOn = false;
@@ -194,7 +197,6 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 
 		// LArmFire
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
-		//EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Ongoing, this, &AArmoredCoreCharacter::FireOnGoing);
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::FireReleased);
 	}
 	else
@@ -206,25 +208,6 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void AArmoredCoreCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (Body and LArm and RArm and Leg)
-	{
-		if (IsBoostOn)
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
-		else
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
-	}
 
 	UpdateCameraSettingsByMovementState();
 	UpdateBoostState();
@@ -307,7 +290,8 @@ void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
 		// 카메라를 천천히 회전해라
 		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
 		{
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator, GetWorld()->GetDeltaSeconds(), 0.25f);
+			// lerpRotator가 (-1,0,1)의 값을 가지기 때문에 곱해준 값 만큼 카메라의 회전각도가 올라간다.
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 1.2f, GetWorld()->GetDeltaSeconds(), 0.2f);
 		}
 
 		// 이동을 멈췄으면
@@ -320,7 +304,7 @@ void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
 	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
 	else
 	{
-		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 3.0f, GetWorld()->GetDeltaSeconds(), 3.0f);
+		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 2.5f, GetWorld()->GetDeltaSeconds(), 3.0f);
 	}	
 	FollowCamera->SetRelativeRotation(newRotator);
 }
@@ -348,11 +332,11 @@ void AArmoredCoreCharacter::QuickBoost()
 			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
 				GetCharacterMovement()->GravityScale = FlyingGravity;
 			else
-				newVelocity += GetActorUpVector() * 500.0f;
+				newVelocity += GetActorUpVector() * 450.0f;
 			
 			ACharacter::LaunchCharacter(newVelocity,true,true);
 
-			CameraBoom->CameraLagSpeed = QuickBoostCameraLagSpeed;
+			//CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
 			CanQuickBoost = false;
 			BoostUsedTime = 0.0f;
 			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,QuickBoostCoolTime,false);
@@ -367,11 +351,29 @@ void AArmoredCoreCharacter::UpdateBoostState()
 	
 	if (IsBoostOn)
 	{
+		if (Body&&LArm&&RArm&&Leg)
+		{
+			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
+			if (AllBodyMaterial)
+			{
+				Body->SetMaterial(0, AllBodyMaterial);
+			}
+		}
+		
 		GetCharacterMovement()->MaxWalkSpeed = BoostSpeed;
 		GetCharacterMovement()->RotationRate = BoostRotationRate;
 	}
 	else
 	{
+		if (Body&&LArm&&RArm&&Leg)
+		{
+			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+			if (AllBodyMaterial)
+			{
+				Body->SetMaterial(0, AllBodyMaterial);
+			}
+		}
+		
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 		GetCharacterMovement()->RotationRate = WalkRotationRate;
 	}
@@ -383,15 +385,18 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	// 카메라 Lag speed를 조정해서 구현
 
 	LerpRotateCameraByMoveInput();
+	if (IsBoostOn)
+		CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
+	else
+		CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
 
-
+	// 퀵부스트
+	/*
 	if (IsQuickBoostTrigger)
 	{
 		//카메라 lag의 원래속도로의 복구속도를 3.0 * deltatime으로 설정해놓음
-		//UE_LOG(LogTemp,Warning,TEXT("CameraLag Speed : %f"), CameraBoom->CameraLagSpeed);
-
 		CameraBoom->CameraLagSpeed += (3.0f * GetWorld()->DeltaTimeSeconds);
-
+	
 		//카메라 lag speed가 원래 속도로 돌아오면 quickboosttrigger를 false처리
 		//카메라 lag 속도의 부스트 on인 속도와 walk속도가 다름
 		//if를 통해 boost, walk 속도만큼 cameralagspeed가 올라왔으면 bool값을 false처리하여 속도를 그만 더하게함
@@ -412,13 +417,14 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	else
 	{
-		// deltatime으로 인해 애매하게 올라간 값 처리
-		if (IsBoostOn)
-			CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
-		else
-			CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
+			// deltatime으로 인해 애매하게 올라간 값 처리
+			if (IsBoostOn)
+				CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
+			else
+				CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
 	}
-
+	*/
+	
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
@@ -430,7 +436,6 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
-	
 }
 
 void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
@@ -455,7 +460,7 @@ void AArmoredCoreCharacter::Fly()
 	{
 		if (GetCharacterMovement()->IsFlying())
 		{
-			AddMovementInput(GetActorUpVector(),1,true);
+			AddMovementInput(GetActorUpVector(),0.75,true);
 		}
 		else
 		{
@@ -472,6 +477,7 @@ void AArmoredCoreCharacter::StopJumping()
 {
 	// AChracter의 Stop Jumping을 override하여 movementmode를 설정해줌
 	Super::StopJumping();
+	UE_LOG(LogTemp,Warning,TEXT("stop jumping"));
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 }
 
@@ -586,41 +592,36 @@ void AArmoredCoreCharacter::UpdateAttackState()
 	}
 }
 
-
 void AArmoredCoreCharacter::MakeProjectile()
 {
 	// TODO
-	// bool 변수를 만들어서 왼쪽무기, 오른쪽무기, 오른쪽 어깨 중에 어떤 무기의 발사체를 발사하는지 확인하기
+	// bool 변수를 만들어서(or switch) 왼쪽무기, 오른쪽무기, 오른쪽 어깨 중에 어떤 무기의 발사체를 발사하는지 확인하기
 	UE_LOG(LogTemp, Warning, TEXT("MakeBullet"));
+	
 	FTransform transform = LArmFirePos->GetComponentTransform();
 	ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
 	check(projectile);
 	projectile->FireInDirection(AimDirection);
 }
 
-
 void AArmoredCoreCharacter::FirePressed()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
-	if (!IsAssertBoostOn)
+	if (IsAssertBoostOn)
+		return;
+
+	IsAttacking = true;
+	if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
-		IsAttacking = true;
-		if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-		{
-			GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,this,&AArmoredCoreCharacter::MakeProjectile,0.3f,true);
-		}
+		GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,this,&AArmoredCoreCharacter::MakeProjectile,0.3f,true);
 	}
 }
-
-void AArmoredCoreCharacter::FireOnGoing()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("FireOnGoing"));
-}
-
 
 void AArmoredCoreCharacter::FireReleased()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("FireReleased"));
+	if (IsAssertBoostOn)
+		return;
 	if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
