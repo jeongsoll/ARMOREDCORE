@@ -56,12 +56,15 @@ class AArmoredCoreCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
-	
+
+	// TimerHandles
 	FTimerHandle QuickBoostCoolTimeHandle;
 	
 	FTimerHandle AssertBoostLaunchHandle;
 
 	FTimerHandle LArmFireTimerHandle;
+
+	FTimerHandle ToggleIsJumpTimerHandle;
 
 public:
 	AArmoredCoreCharacter();
@@ -85,16 +88,15 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+
+	// Jump & Fly
 	virtual void Jump() override;
+	
+	void Fly();
 	
 	virtual void StopJumping() override;
 
-	// ETC
-	void ToggleRotationToMovement();
-
-	void LerpRotateCameraByMoveInput();
-
-	void UpdateCameraSettingsByMovementState();
+	void ToggleIsJump();
 	
 	// Boost Function
 	void BoostOn();
@@ -103,7 +105,6 @@ protected:
 
 	void UpdateBoostState();
 
-	void Fly();
 	
 	// QuickBoost Function
 	void QuickBoost();
@@ -128,6 +129,13 @@ protected:
 
 	void RotateCharacterToAimDirection();
 
+	// ETC
+	void ToggleRotationToMovement();
+
+	void LerpRotateCameraByMoveInput();
+
+	void UpdateCameraSettingsByMovementState();
+	
 private:
 	FVector2D MovementVector;
 	
@@ -162,6 +170,8 @@ public:
 	float WalkSpeed;
 	
 	FRotator WalkRotationRate;
+
+	bool IsJump;
 	
 	// Boost variance
 	bool IsBoostOn;
@@ -174,7 +184,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostGauge;
 	
-	UPROPERTY(EditAnywhere,Category="Boost")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostUsedTime;
 
 	bool IsBoostChargeStart;
@@ -224,8 +234,5 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
-
-	UPROPERTY(EditAnywhere)
-	float test{2000};
 };
 
