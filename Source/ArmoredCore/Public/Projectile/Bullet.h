@@ -11,6 +11,7 @@ class ARMOREDCORE_API ABullet : public AActor
 {
 	GENERATED_BODY()
 
+	
 
 
 public:
@@ -41,4 +42,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float CurrentTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float AttackDamage{100.0f};
 };

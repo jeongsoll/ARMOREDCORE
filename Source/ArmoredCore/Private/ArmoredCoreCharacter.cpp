@@ -118,7 +118,9 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 		RArm->SetRelativeLocation(FVector3d(35.0f,50.0f,0.0f));
 	}
 
-	ACharacter::GetMesh()->SetRelativeLocation(FVector(0,0,-10));
+	GetMesh()->SetRelativeLocation(FVector(0,0,-10));
+	GetMesh()->SetGenerateOverlapEvents(false);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 }
 
 void AArmoredCoreCharacter::BeginPlay()
@@ -163,6 +165,7 @@ void AArmoredCoreCharacter::BeginPlay()
 
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -685,5 +688,10 @@ void AArmoredCoreCharacter::ToggleRotationToMovement()
 	}
 	else
 		GetCharacterMovement()->bOrientRotationToMovement = true;
-	
+}
+
+void AArmoredCoreCharacter::TakeDamage(float dmg)
+{
+	if (CurrentHP > 0)
+		CurrentHP -= dmg;
 }
