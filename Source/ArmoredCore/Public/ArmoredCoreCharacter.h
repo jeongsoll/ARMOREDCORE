@@ -137,6 +137,9 @@ protected:
 	void UpdateCameraSettingsByMovementState();
 	
 	void LerpRotateCameraByMoveInput();
+
+	UFUNCTION(BlueprintCallable)
+	void TakeDamage(float dmg);
 	
 private:
 	FVector2D MovementVector;
@@ -178,6 +181,12 @@ public:
 	bool IsFlying;
 
 	bool IsRending;
+
+	UPROPERTY(EditAnywhere)
+	float MaxHP{9080.0f};
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float CurrentHP{CurrentHP = MaxHP};
+	
 	
 	// Boost variance
 	bool IsBoostOn;
