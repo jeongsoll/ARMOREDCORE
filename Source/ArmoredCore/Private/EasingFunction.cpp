@@ -23,20 +23,6 @@ float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha)
 	}
 }
 
-float UEasingFunction::UpdateEasedAlpha(EEasingType EasingType, float CurrentTime, float TotalDuration, float DeltaTime)
-{
-	
-	CurrentTime += DeltaTime;
-
-	float Alpha = CurrentTime / TotalDuration;
-	if (Alpha >= 1.0f)
-	{
-		Alpha = 1.0f;
-	}
-
-	return GetEasedValue(EasingType, Alpha);
-}
-
 float UEasingFunction::EaseInQuint(float Alpha)
 {
 	return FMath::Pow(Alpha, 5);
