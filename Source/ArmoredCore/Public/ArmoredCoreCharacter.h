@@ -66,6 +66,8 @@ class AArmoredCoreCharacter : public ACharacter
 
 	FTimerHandle ToggleIsJumpTimerHandle;
 
+	FTimerHandle ToggleIsRendingTimerHandle;
+
 public:
 	AArmoredCoreCharacter();
 	
@@ -135,9 +137,6 @@ protected:
 	void UpdateCameraSettingsByMovementState();
 	
 	void LerpRotateCameraByMoveInput();
-
-	void LerpCameraOffsetByRending();
-
 	
 private:
 	FVector2D MovementVector;
@@ -241,10 +240,5 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
-
-
-	// Rending Cam Offset variance
-	float RendingAlpha{0.0f};
-	float CurrentTime{0.0f};
 };
 

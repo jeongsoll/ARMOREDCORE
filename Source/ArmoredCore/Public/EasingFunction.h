@@ -17,6 +17,9 @@ enum class EEasingType : uint8
 	EaseOutQuint,
 	EaseInElastic,
 	EaseOutElastic,
+	EaseOutBounce,
+	EaseOutBack,
+	EaseInOutBack,
 };
 
 UCLASS()
@@ -35,11 +38,20 @@ private:
 
 	// Ease Out Elastic
 	static float EaseOutElastic(float Alpha);
+
+	// Ease Out Bounce
+	static float EaseOutBounce(float Alpha);
+
+	// Ease Out Back
+	static float EaseOutBack(float Alpha);
+
+	// Ease In Out Back
+	static float EaseInOutBack(float Alpha);
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Easing")
 	static float GetEasedValue(EEasingType EasingType, float Alpha);
 	
 	UFUNCTION(BlueprintCallable, Category = "Easing")
-	static float UpdateEasedAlpha(EEasingType EasingType, float& CurrentTime, float TotalDuration, float DeltaTime);
+	static float UpdateEasedAlpha(EEasingType EasingType, float CurrentTime, float TotalDuration, float DeltaTime);
 };

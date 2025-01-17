@@ -382,14 +382,6 @@ void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
 	FollowCamera->SetRelativeRotation(newRotator);
 }
 
-void AArmoredCoreCharacter::LerpCameraOffsetByRending()
-{
-	RendingAlpha = UEasingFunction::UpdateEasedAlpha(EEasingType::EaseOutElastic,CurrentTime,100.0f,GetWorld()->GetDeltaSeconds());
-	
-	FVector newSocket = FMath::Lerp(CameraBoom->SocketOffset,FVector(0,0,0),RendingAlpha);
-	CameraBoom->SocketOffset = newSocket;
-}
-
 void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 {
 	// 플레이어 움직임 상태에 따른 카메라 lagSpeed, offset, rotation 설정
@@ -435,6 +427,7 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	*/
 	
+	
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
@@ -443,7 +436,7 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	else if (IsFlying)
 	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-120),GetWorld()->GetDeltaSeconds(), 1.0f);
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-150),GetWorld()->GetDeltaSeconds(), 1.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
 	else
@@ -451,13 +444,9 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 		// todo
 		// 이 부분에 착지 시, 카메라 offset lerp를 하는 함수를 실행하다가
 		// bool값을 받아서 아래 코드를 실행하게 해야함
-		if (IsRending)
-			LerpCameraOffsetByRending();
-		else
-		{
-			FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
-			CameraBoom->SocketOffset = newSocket;
-		}
+
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
+		CameraBoom->SocketOffset = newSocket;
 	}
 }
 
@@ -479,7 +468,7 @@ void AArmoredCoreCharacter::Jump()
 			GetWorld()->GetTimerManager().ClearTimer(ToggleIsJumpTimerHandle);
 		}
 		IsJumping = false;
-		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.5f,false);
+		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.3f,false);
 	}
 }
 
@@ -551,7 +540,7 @@ void AArmoredCoreCharacter::AssertBoost()
 void AArmoredCoreCharacter::StartAssertBoostLaunch()
 {
 	IsAssertBoostLaunch = true;
-	ACharacter::LaunchCharacter(AssertBoostDir * 1500.0f,true,true);
+	ACharacter::LaunchCharacter(AssertBoostDir * 1700.0f,true,true);
 }
 
 void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
@@ -568,7 +557,7 @@ void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
 		{
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			GetCharacterMovement()->GravityScale = FlyingGravity;
-			AddMovementInput(AssertBoostDir,5.0f,true);
+			AddMovementInput(AssertBoostDir,7.0f,true);
 		}
 	}
 	else
