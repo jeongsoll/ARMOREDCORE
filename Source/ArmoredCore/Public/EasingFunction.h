@@ -10,12 +10,16 @@
 /**
  * 
  */
-enum class EEasingType
+UENUM(BlueprintType)
+enum class EEasingType : uint8
 {
 	EaseInQuint,
 	EaseOutQuint,
 	EaseInElastic,
 	EaseOutElastic,
+	EaseOutBounce,
+	EaseOutBack,
+	EaseInOutBack,
 };
 
 UCLASS()
@@ -23,11 +27,31 @@ class ARMOREDCORE_API UEasingFunction : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 private:
-	static float EaseInQuint(float Time);
-	static float EaseOutQuint(float Time);
-	static float EaseInElastic(float Time);
-	static float EaseOutElastic(float Time);
+	// Ease In Quint
+	static float EaseInQuint(float Alpha);
+
+	// Ease Out Quint
+	static float EaseOutQuint(float Alpha);
+
+	// Ease In Elastic
+	static float EaseInElastic(float Alpha);
+
+	// Ease Out Elastic
+	static float EaseOutElastic(float Alpha);
+
+	// Ease Out Bounce
+	static float EaseOutBounce(float Alpha);
+
+	// Ease Out Back
+	static float EaseOutBack(float Alpha);
+
+	// Ease In Out Back
+	static float EaseInOutBack(float Alpha);
 	
 public:
-	static float ApplyEasing(EEasingType EasingType, float Time);
+	UFUNCTION(BlueprintCallable, Category = "Easing")
+	static float GetEasedValue(EEasingType EasingType, float Alpha);
+	
+	UFUNCTION(BlueprintCallable, Category = "Easing")
+	static float UpdateEasedAlpha(EEasingType EasingType, float CurrentTime, float TotalDuration, float DeltaTime);
 };

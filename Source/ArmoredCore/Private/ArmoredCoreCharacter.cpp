@@ -3,6 +3,7 @@
 #include "ArmoredCoreCharacter.h"
 
 #include "Bullet.h"
+#include "EasingFunction.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -51,7 +52,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetRelativeLocation(FVector(0.0f, 0.0f, 80.0f));
+	CameraBoom->SetRelativeLocation(FVector(-30.0f, 0.0f, 80.0f));
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->bEnableCameraLag = true;
@@ -116,6 +117,8 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 		RArm->SetRelativeScale3D(FVector3d(1.5f,0.2f,0.2f));
 		RArm->SetRelativeLocation(FVector3d(35.0f,50.0f,0.0f));
 	}
+
+	ACharacter::GetMesh()->SetRelativeLocation(FVector(0,0,-10));
 }
 
 void AArmoredCoreCharacter::BeginPlay()
@@ -134,6 +137,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	IsMove = false;
 	IsJumping = false;
 	IsFlying = false;
+	IsRending = false;
 	IsAttacking = false;
 
 	BaseGravity = 1.75f;
@@ -143,7 +147,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsBoostOn = false;
 	BoostSpeed = 600.0f;
-	BoostRotationRate = FRotator(0,125.0f,0);
+	BoostRotationRate = FRotator(0,150.0f,0);
 	
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
 	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
@@ -249,11 +253,7 @@ void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
 void AArmoredCoreCharacter::OnMoveComplete()
 {
 	//UE_LOG(LogTemp,Warning,TEXT("move complete"));
-	if (!GetCharacterMovement()->IsFalling() || !GetCharacterMovement()->IsFlying() || !GetCharacterMovement()->IsWalking())
-	{
-		IsMove = false;
-		IsBoostOn = false;
-	}
+	IsMove = false;
 }
 
 
@@ -270,44 +270,6 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
-{
-	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
-	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
-	FRotator newRotator;
-
-	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
-	if (CanQuickBoost)
-	{
-		// 퀵 부스트를 사용한 후에 Trigger bool값이 몇초 뒤에 false로 변함
-		// 이를 이용해서 퀵부스트로 변경된 회전값을 0 0 0 으로 빠른 회복을 위한 코드
-		if (IsQuickBoostTrigger)
-		{
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
-		}
-
-		// 부스트 이동을 하는 상태이고 퀵부스트가 끝났으면
-		// 카메라를 천천히 회전해라
-		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
-		{
-			// lerpRotator가 (-1,0,1)의 값을 가지기 때문에 곱해준 값 만큼 카메라의 회전각도가 올라간다.
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 1.2f, GetWorld()->GetDeltaSeconds(), 0.2f);
-		}
-
-		// 이동을 멈췄으면
-		// 카메라를 원상복구 시켜라
-		else
-		{
-			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
-		}
-	}
-	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
-	else
-	{
-		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 2.5f, GetWorld()->GetDeltaSeconds(), 3.0f);
-	}	
-	FollowCamera->SetRelativeRotation(newRotator);
-}
 
 
 void AArmoredCoreCharacter::BoostOn()
@@ -351,7 +313,7 @@ void AArmoredCoreCharacter::UpdateBoostState()
 	
 	if (IsBoostOn)
 	{
-		if (Body&&LArm&&RArm&&Leg)
+		if (Body && LArm && RArm && Leg)
 		{
 			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
 			if (AllBodyMaterial)
@@ -366,7 +328,7 @@ void AArmoredCoreCharacter::UpdateBoostState()
 	}
 	else
 	{
-		if (Body&&LArm&&RArm&&Leg)
+		if (Body && LArm && RArm && Leg)
 		{
 			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 			if (AllBodyMaterial)
@@ -379,6 +341,45 @@ void AArmoredCoreCharacter::UpdateBoostState()
 		GetCharacterMovement()->RotationRate = WalkRotationRate;
 		GetCharacterMovement()->BrakingFrictionFactor = 1.0f;
 	}
+}
+
+void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
+{
+	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
+	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
+	FRotator newRotator;
+
+	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
+	if (CanQuickBoost)
+	{
+		// 퀵 부스트를 사용한 후에 Trigger bool값이 몇초 뒤에 false로 변함
+		// 이를 이용해서 퀵부스트로 변경된 회전값을 0 0 0 으로 빠른 회복을 위한 코드
+		if (IsQuickBoostTrigger)
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+
+		// 부스트 이동을 하는 상태이고 퀵부스트가 끝났으면
+		// 카메라를 천천히 회전해라
+		if (IsMove && IsBoostOn && !IsQuickBoostTrigger)
+		{
+			// lerpRotator가 (-1,0,1)의 값을 가지기 때문에 곱해준 값 만큼 카메라의 회전각도가 올라간다.
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 1.2f, GetWorld()->GetDeltaSeconds(), 0.2f);
+		}
+
+		// 이동을 멈췄으면
+		// 카메라를 원상복구 시켜라
+		else
+		{
+			newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),FRotator(0,0,0),GetWorld()->GetDeltaSeconds(),3.0f);
+		}
+	}
+	// 퀵부스트 사용 시, 카메라를 기존보다 3배 더 회전값을 주어서 돌려라
+	else
+	{
+		newRotator = UKismetMathLibrary::RInterpTo(FollowCamera->GetRelativeRotation(),lerpRotator * 2.5f, GetWorld()->GetDeltaSeconds(), 3.0f);
+	}	
+	FollowCamera->SetRelativeRotation(newRotator);
 }
 
 void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
@@ -426,14 +427,24 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	*/
 	
+	
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
 		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,-15),GetWorld()->GetDeltaSeconds(), 3.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
+	else if (IsFlying)
+	{
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-150),GetWorld()->GetDeltaSeconds(), 1.0f);
+		CameraBoom->SocketOffset = newSocket;
+	}
 	else
 	{
+		// todo
+		// 이 부분에 착지 시, 카메라 offset lerp를 하는 함수를 실행하다가
+		// bool값을 받아서 아래 코드를 실행하게 해야함
+
 		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
@@ -448,7 +459,7 @@ void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
 void AArmoredCoreCharacter::Jump()
 {
 	UE_LOG(LogTemp,Display,TEXT("jumping"));
-	if (GetCharacterMovement()->IsWalking())
+	if (GetCharacterMovement()->IsWalking() && !IsAssertBoostOn)
 	{
 		ACharacter::LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
 
@@ -457,7 +468,7 @@ void AArmoredCoreCharacter::Jump()
 			GetWorld()->GetTimerManager().ClearTimer(ToggleIsJumpTimerHandle);
 		}
 		IsJumping = false;
-		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.5f,false);
+		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.3f,false);
 	}
 }
 
@@ -500,6 +511,7 @@ void AArmoredCoreCharacter::StopJumping()
 		GetWorld()->GetTimerManager().ClearTimer(ToggleIsJumpTimerHandle);
 	}
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	IsFlying = false;
 }
 
 void AArmoredCoreCharacter::AssertBoost()
@@ -528,7 +540,7 @@ void AArmoredCoreCharacter::AssertBoost()
 void AArmoredCoreCharacter::StartAssertBoostLaunch()
 {
 	IsAssertBoostLaunch = true;
-	ACharacter::LaunchCharacter(AssertBoostDir * 1000.0f,true,true);
+	ACharacter::LaunchCharacter(AssertBoostDir * 1700.0f,true,true);
 }
 
 void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
@@ -545,7 +557,7 @@ void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
 		{
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			GetCharacterMovement()->GravityScale = FlyingGravity;
-			AddMovementInput(AssertBoostDir,2.0f,true);
+			AddMovementInput(AssertBoostDir,7.0f,true);
 		}
 	}
 	else
@@ -565,7 +577,6 @@ void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
 
 void AArmoredCoreCharacter::UpdateBoostGauge()
 {
-	//UE_LOG(LogTemp,Warning,TEXT("boostgauge : %f"),BoostGauge);
 	if (BoostUsedTime >= 3.0f)
 	{
 		if (BoostGauge < 100.0f &&
@@ -664,8 +675,15 @@ void AArmoredCoreCharacter::RotateCharacterToAimDirection()
 void AArmoredCoreCharacter::ToggleRotationToMovement()
 {
 	// Tick에서 controller input에 따른 rotation 관리 설정을 할지 안할지에 대한 함수
-	if (IsAttacking || IsAssertBoostOn)
+	if (!IsMove && IsFlying)
 		GetCharacterMovement()->bOrientRotationToMovement = false;
+	else if (IsMove && IsFlying)
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+	else if (IsAttacking || IsAssertBoostOn)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
 	else
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+	
 }

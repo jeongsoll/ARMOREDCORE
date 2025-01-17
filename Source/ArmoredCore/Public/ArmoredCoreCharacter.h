@@ -66,6 +66,8 @@ class AArmoredCoreCharacter : public ACharacter
 
 	FTimerHandle ToggleIsJumpTimerHandle;
 
+	FTimerHandle ToggleIsRendingTimerHandle;
+
 public:
 	AArmoredCoreCharacter();
 	
@@ -132,9 +134,9 @@ protected:
 	// ETC
 	void ToggleRotationToMovement();
 
-	void LerpRotateCameraByMoveInput();
-
 	void UpdateCameraSettingsByMovementState();
+	
+	void LerpRotateCameraByMoveInput();
 	
 private:
 	FVector2D MovementVector;
@@ -174,6 +176,8 @@ public:
 	bool IsJumping;
 
 	bool IsFlying;
+
+	bool IsRending;
 	
 	// Boost variance
 	bool IsBoostOn;
