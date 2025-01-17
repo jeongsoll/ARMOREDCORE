@@ -139,7 +139,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	IsMove = false;
 	IsJumping = false;
 	IsFlying = false;
-	IsRending = false;
+	IsLanding = false;
 	IsAttacking = false;
 
 	BaseGravity = 1.75f;
@@ -215,7 +215,6 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void AArmoredCoreCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	UpdateCameraSettingsByMovementState();
 	UpdateBoostState();
 	UpdateBoostGauge();
@@ -430,7 +429,6 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	*/
 	
-	
 	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
 	if (IsAssertBoostOn)
 	{
@@ -444,13 +442,32 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 	}
 	else
 	{
-		// todo
-		// 이 부분에 착지 시, 카메라 offset lerp를 하는 함수를 실행하다가
-		// bool값을 받아서 아래 코드를 실행하게 해야함
+		if (IsLanding)
+		{
+			//UE_LOG(LogTemp,Display,TEXT("Landing.."));
+			cTime += GetWorld()->GetDeltaSeconds();
+			alpha = cTime / 1.0f;
+			float newAlpha = UEasingFunction::GetEasedValue(EEasingType::EaseOutElastic,alpha);
+			float newZ = FMath::Lerp(CameraBoom->SocketOffset.Z,-50,newAlpha);
+			FVector newSocket = FVector(CameraBoom->SocketOffset.X,CameraBoom->SocketOffset.Y,newZ);
+			CameraBoom->SocketOffset = newSocket;
 
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
-		CameraBoom->SocketOffset = newSocket;
+			if (!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+			{
+				GetWorld()->GetTimerManager().SetTimer(ToggleIsLandingTimerHandle,this,&AArmoredCoreCharacter::ToggleIsLanding,1.0f,false);
+			}
+		}
+		else if (!IsLanding)
+		{
+			if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+			{
+				GetWorld()->GetTimerManager().ClearTimer(ToggleIsLandingTimerHandle);
+			}
+			FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
+			CameraBoom->SocketOffset = newSocket;
+		}
 	}
+
 }
 
 void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
@@ -480,6 +497,12 @@ void AArmoredCoreCharacter::ToggleIsJump()
 	IsJumping = true;
 }
 
+void AArmoredCoreCharacter::ToggleIsLanding()
+{
+	PreviousMovementMode = MOVE_Falling;
+	IsLanding = false;
+}
+
 
 void AArmoredCoreCharacter::Fly()
 {
@@ -496,6 +519,7 @@ void AArmoredCoreCharacter::Fly()
 		{
 			IsFlying = true;
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			PreviousMovementMode = MOVE_Flying;
 		}
 	}
 	else
@@ -516,6 +540,16 @@ void AArmoredCoreCharacter::StopJumping()
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 	IsFlying = false;
 }
+
+void AArmoredCoreCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (PreviousMovementMode == MOVE_Flying)
+		IsLanding = true;
+	
+}
+
 
 void AArmoredCoreCharacter::AssertBoost()
 {

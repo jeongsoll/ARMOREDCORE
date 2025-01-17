@@ -66,7 +66,7 @@ class AArmoredCoreCharacter : public ACharacter
 
 	FTimerHandle ToggleIsJumpTimerHandle;
 
-	FTimerHandle ToggleIsRendingTimerHandle;
+	FTimerHandle ToggleIsLandingTimerHandle;
 
 public:
 	AArmoredCoreCharacter();
@@ -98,7 +98,11 @@ protected:
 	
 	virtual void StopJumping() override;
 
+	virtual void Landed(const FHitResult& Hit) override;
+
 	void ToggleIsJump();
+
+	void ToggleIsLanding();
 	
 	// Boost Function
 	void BoostOn();
@@ -180,7 +184,7 @@ public:
 
 	bool IsFlying;
 
-	bool IsRending;
+	bool IsLanding;
 
 	UPROPERTY(EditAnywhere)
 	float MaxHP{9080.0f};
@@ -249,5 +253,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
+
+	float cTime;
+	float alpha;
+	TEnumAsByte<EMovementMode> PreviousMovementMode;
 };
 
