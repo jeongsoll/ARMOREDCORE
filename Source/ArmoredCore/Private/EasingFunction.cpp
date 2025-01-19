@@ -6,7 +6,15 @@
 #include <ThirdParty/Imath/Deploy/Imath-3.1.9/include/Imath/ImathPlatform.h>
 
 
-float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha)
+float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha, float CurrentTime, float Duration, float DeltaTime)
+{
+	CurrentTime += DeltaTime;
+	Alpha = CurrentTime / Duration;
+	Alpha = ChooseEasingFunction(EasingType, Alpha);
+	return Alpha;
+}
+
+float UEasingFunction::ChooseEasingFunction(EEasingType EasingType, float Alpha)
 {
 	switch (EasingType)
 	{
@@ -22,6 +30,7 @@ float UEasingFunction::GetEasedValue(EEasingType EasingType, float Alpha)
 		return Alpha;
 	}
 }
+
 
 float UEasingFunction::EaseInQuint(float Alpha)
 {

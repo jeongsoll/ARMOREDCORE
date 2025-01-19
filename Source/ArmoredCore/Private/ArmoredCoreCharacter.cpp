@@ -201,7 +201,8 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(BoostOnAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::BoostOn);
 		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::QuickBoost);
 		EnhancedInputComponent->BindAction(AssertBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoost);
-
+		EnhancedInputComponent->BindAction(AssertBoostCancleAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoostCancle);
+	
 		// LArmFire
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::FireReleased);
@@ -215,10 +216,11 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void AArmoredCoreCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	UpdateCameraSettingsByMovementState();
 	UpdateBoostState();
 	UpdateBoostGauge();
-	UpdateAssertBoostOnOff();
+	UpdateAssertBoostFly();
 	ToggleRotationToMovement();
 	UpdateAttackState();
 }
@@ -272,6 +274,10 @@ void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState newState)
+{
+	PlayerState = newState;
+}
 
 
 void AArmoredCoreCharacter::BoostOn()
@@ -440,34 +446,27 @@ void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
 		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-150),GetWorld()->GetDeltaSeconds(), 1.0f);
 		CameraBoom->SocketOffset = newSocket;
 	}
-	else
+	else if (IsLanding)
 	{
-		if (IsLanding)
-		{
-			//UE_LOG(LogTemp,Display,TEXT("Landing.."));
-			cTime += GetWorld()->GetDeltaSeconds();
-			alpha = cTime / 1.0f;
-			float newAlpha = UEasingFunction::GetEasedValue(EEasingType::EaseOutElastic,alpha);
-			float newZ = FMath::Lerp(CameraBoom->SocketOffset.Z,-50,newAlpha);
-			FVector newSocket = FVector(CameraBoom->SocketOffset.X,CameraBoom->SocketOffset.Y,newZ);
-			CameraBoom->SocketOffset = newSocket;
+		float newAlpha = UEasingFunction::GetEasedValue(EEasingType::EaseOutElastic,alpha,cTime,2.0f,GetWorld()->GetDeltaSeconds());
+		float newZ = FMath::Lerp(CameraBoom->SocketOffset.Z,-50,newAlpha);
+		FVector newSocket = FVector(CameraBoom->SocketOffset.X,CameraBoom->SocketOffset.Y,newZ);
+		CameraBoom->SocketOffset = newSocket;
 
-			if (!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
-			{
-				GetWorld()->GetTimerManager().SetTimer(ToggleIsLandingTimerHandle,this,&AArmoredCoreCharacter::ToggleIsLanding,1.0f,false);
-			}
-		}
-		else if (!IsLanding)
+		if (!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
 		{
-			if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
-			{
-				GetWorld()->GetTimerManager().ClearTimer(ToggleIsLandingTimerHandle);
-			}
-			FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
-			CameraBoom->SocketOffset = newSocket;
+			GetWorld()->GetTimerManager().SetTimer(ToggleIsLandingTimerHandle,this,&AArmoredCoreCharacter::ToggleIsLanding,1.0f,false);
 		}
 	}
-
+	else
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(ToggleIsLandingTimerHandle);
+		}
+		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
+		CameraBoom->SocketOffset = newSocket;
+	}
 }
 
 void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
@@ -481,7 +480,7 @@ void AArmoredCoreCharacter::Jump()
 	UE_LOG(LogTemp,Display,TEXT("jumping"));
 	if (GetCharacterMovement()->IsWalking() && !IsAssertBoostOn)
 	{
-		ACharacter::LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
+		LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsJumpTimerHandle))
 		{
@@ -496,13 +495,6 @@ void AArmoredCoreCharacter::ToggleIsJump()
 {
 	IsJumping = true;
 }
-
-void AArmoredCoreCharacter::ToggleIsLanding()
-{
-	PreviousMovementMode = MOVE_Falling;
-	IsLanding = false;
-}
-
 
 void AArmoredCoreCharacter::Fly()
 {
@@ -519,7 +511,6 @@ void AArmoredCoreCharacter::Fly()
 		{
 			IsFlying = true;
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-			PreviousMovementMode = MOVE_Flying;
 		}
 	}
 	else
@@ -544,19 +535,24 @@ void AArmoredCoreCharacter::StopJumping()
 void AArmoredCoreCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-
-	if (PreviousMovementMode == MOVE_Flying)
-		IsLanding = true;
 	
+	//IsLanding = true;
 }
 
+void AArmoredCoreCharacter::ToggleIsLanding()
+{
+	IsLanding = false;
+}
 
 void AArmoredCoreCharacter::AssertBoost()
 {
-	IsAssertBoostOn = !IsAssertBoostOn;
+	if (BoostGauge > 0.0f)
+		IsAssertBoostOn = true;
+	
 	if (IsAssertBoostOn)
 	{
-		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
+		if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+			GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
 		IsMove = true;
 		IsBoostOn = true;
 
@@ -574,13 +570,22 @@ void AArmoredCoreCharacter::AssertBoost()
 	}
 }
 
-void AArmoredCoreCharacter::StartAssertBoostLaunch()
+void AArmoredCoreCharacter::AssertBoostCancle()
 {
-	IsAssertBoostLaunch = true;
-	ACharacter::LaunchCharacter(AssertBoostDir * 1700.0f,true,true);
+	IsAssertBoostOn = false;
 }
 
-void AArmoredCoreCharacter::UpdateAssertBoostOnOff()
+void AArmoredCoreCharacter::StartAssertBoostLaunch()
+{
+	if (!IsAssertBoostLaunch)
+	{
+		IsAssertBoostLaunch = true;
+		LaunchCharacter(AssertBoostDir * 2000.0f,true,true);
+	}
+	
+}
+
+void AArmoredCoreCharacter::UpdateAssertBoostFly()
 {
 	if (IsAssertBoostOn)
 	{
@@ -628,7 +633,7 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 	}
 
 	// 비행 상태, 어썰트 부스트일때 부스트 게이지 관리
-	if (GetCharacterMovement()->IsFlying() && BoostGauge > 0)
+	if (BoostGauge > 0.0f && GetCharacterMovement()->IsFlying())
 	{
 		BoostUsedTime = 0.0f;
 		if (IsAssertBoostOn)
@@ -722,10 +727,4 @@ void AArmoredCoreCharacter::ToggleRotationToMovement()
 	}
 	else
 		GetCharacterMovement()->bOrientRotationToMovement = true;
-}
-
-void AArmoredCoreCharacter::TakeDamage(float dmg)
-{
-	if (CurrentHP > 0)
-		CurrentHP -= dmg;
 }

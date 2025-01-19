@@ -15,6 +15,18 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+enum class EPlayerState : uint8
+{
+	Idle,
+	Attacking,
+	Moving,
+	Walking,
+	BoostOn,
+	AssertBoost,
+	Falling,
+	Landing,
+};
+
 UCLASS(config=Game)
 class AArmoredCoreCharacter : public ACharacter
 {
@@ -55,6 +67,9 @@ class AArmoredCoreCharacter : public ACharacter
 	UInputAction* AssertBoostAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AssertBoostCancleAction;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
 
 	// TimerHandles
@@ -90,6 +105,10 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	// Camera
+	void UpdateCameraSettingsByMovementState();
+	
+	void LerpRotateCameraByMoveInput();
 
 	// Jump & Fly
 	virtual void Jump() override;
@@ -110,7 +129,6 @@ protected:
 	void UpdateBoostGauge();
 
 	void UpdateBoostState();
-
 	
 	// QuickBoost Function
 	void QuickBoost();
@@ -120,9 +138,11 @@ protected:
 	// AssertBoost Function
 	void AssertBoost();
 
+	void AssertBoostCancle();
+
 	void StartAssertBoostLaunch();
 
-	void UpdateAssertBoostOnOff();
+	void UpdateAssertBoostFly();
 
 	// Attack Function
 	void UpdateAttackState();
@@ -136,14 +156,10 @@ protected:
 	void RotateCharacterToAimDirection();
 
 	// ETC
-	void ToggleRotationToMovement();
-
-	void UpdateCameraSettingsByMovementState();
+	void UpdatePlayerState(EPlayerState newState);
 	
-	void LerpRotateCameraByMoveInput();
-
-	UFUNCTION(BlueprintCallable)
-	void TakeDamage(float dmg);
+	void ToggleRotationToMovement();
+	
 	
 private:
 	FVector2D MovementVector;
@@ -172,6 +188,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
 
+	EPlayerState PlayerState;
 	
 	// BaseMove variance
 	bool IsMove;
@@ -254,8 +271,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
 
+	// EasingClass Variance
 	float cTime;
 	float alpha;
-	TEnumAsByte<EMovementMode> PreviousMovementMode;
 };
 
