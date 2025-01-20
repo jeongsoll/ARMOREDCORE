@@ -7,7 +7,7 @@
 AArmoredCoreGameMode::AArmoredCoreGameMode()
 {
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/JJH/BP_PlayerMech.BP_PlayerMech"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Script/Engine.Blueprint'/Game/JJH/Blueprints/BP_PlayerMech.BP_PlayerMech'"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;

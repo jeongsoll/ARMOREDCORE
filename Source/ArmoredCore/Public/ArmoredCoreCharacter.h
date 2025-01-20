@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "ArmoredCoreCharacter.generated.h"
@@ -14,6 +15,17 @@ class UInputAction;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+
+enum class EPlayerState : uint8
+{
+	Idle,
+	Walking,
+	Jumping,
+	Flying,
+	Falling,
+	AssertBoost,
+	Attacking,
+};
 
 UCLASS(config=Game)
 class AArmoredCoreCharacter : public ACharacter
@@ -55,8 +67,15 @@ class AArmoredCoreCharacter : public ACharacter
 	UInputAction* AssertBoostAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AssertBoostCancleAction;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
 
+
+public:
+	AArmoredCoreCharacter();
+	
 	// TimerHandles
 	FTimerHandle QuickBoostCoolTimeHandle;
 	
@@ -67,12 +86,8 @@ class AArmoredCoreCharacter : public ACharacter
 	FTimerHandle ToggleIsJumpTimerHandle;
 
 	FTimerHandle ToggleIsLandingTimerHandle;
-
-public:
-	AArmoredCoreCharacter();
 	
-
-protected:
+	void UpdatePlayerState(EPlayerState newState);
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -90,15 +105,15 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	// Camera
+	void UpdateCameraSettingsByMovementState();
+	
+	void LerpRotateCameraByMoveInput();
 
 	// Jump & Fly
 	virtual void Jump() override;
 	
-	void Fly();
-	
 	virtual void StopJumping() override;
-
-	virtual void Landed(const FHitResult& Hit) override;
 
 	void ToggleIsJump();
 
@@ -110,7 +125,6 @@ protected:
 	void UpdateBoostGauge();
 
 	void UpdateBoostState();
-
 	
 	// QuickBoost Function
 	void QuickBoost();
@@ -120,9 +134,11 @@ protected:
 	// AssertBoost Function
 	void AssertBoost();
 
+	void AssertBoostCancle();
+
 	void StartAssertBoostLaunch();
 
-	void UpdateAssertBoostOnOff();
+	void UpdateAssertBoostFly();
 
 	// Attack Function
 	void UpdateAttackState();
@@ -137,16 +153,12 @@ protected:
 
 	// ETC
 	void ToggleRotationToMovement();
-
-	void UpdateCameraSettingsByMovementState();
 	
-	void LerpRotateCameraByMoveInput();
-
-	UFUNCTION(BlueprintCallable)
-	void TakeDamage(float dmg);
 	
 private:
 	FVector2D MovementVector;
+	
+	IPlayerMechState* CurrentState;
 	
 public:
 	/** Returns CameraBoom subobject **/
@@ -171,7 +183,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
-
+	
+	EPlayerState CurrentStateEnum;
+	EPlayerState PreviousStateEnum;
 	
 	// BaseMove variance
 	bool IsMove;
@@ -180,7 +194,7 @@ public:
 	
 	FRotator WalkRotationRate;
 
-	bool IsJumping;
+	bool IsJumped;
 
 	bool IsFlying;
 
@@ -254,8 +268,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
 
+	// EasingClass Variance
 	float cTime;
 	float alpha;
-	TEnumAsByte<EMovementMode> PreviousMovementMode;
 };
 

@@ -51,5 +51,8 @@ private:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Easing")
-	static float GetEasedValue(EEasingType EasingType, float Alpha);
+	static float ChooseEasingFunction(EEasingType EasingType, float Alpha);
+
+	UFUNCTION(BlueprintCallable, Category = "Easing")
+	static float GetEasedValue(EEasingType EasingType, float Alpha, float CurrentTime, float Duration, float DeltaTime);
 };
