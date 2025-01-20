@@ -8,7 +8,7 @@
 
 void UWalkState::EnterState(class AArmoredCoreCharacter* Character)
 {
-	//Character->IsMove = true;
+	Character->IsMove = true;
 }
 
 void UWalkState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)

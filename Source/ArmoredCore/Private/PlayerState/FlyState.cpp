@@ -20,6 +20,12 @@ void UFlyState::EnterState(class AArmoredCoreCharacter* Character)
 
 void UFlyState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
+	if (!Character->IsMove && Character->IsFlying)
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	else if (Character->IsMove && Character->IsFlying)
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+	
+		
 	if (Character->GetCharacterMovement()->IsFlying() && Character->BoostGauge > 0.0f)
 	{
 		Character->BoostUsedTime = 0.0f;

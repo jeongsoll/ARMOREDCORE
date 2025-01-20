@@ -234,7 +234,7 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	UpdateCameraSettingsByMovementState();
 	UpdateBoostState();
 	UpdateBoostGauge();
-	ToggleRotationToMovement();
+	//ToggleRotationToMovement();
 	UpdateAttackState();
 }
 

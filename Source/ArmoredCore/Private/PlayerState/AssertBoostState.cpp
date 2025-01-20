@@ -25,6 +25,7 @@ void UAssertBoostState::UpdateState(class AArmoredCoreCharacter* Character, floa
 		Character->IsMove = true;
 		Character->IsBoostOn = true;
 		Character->MouseSensitivity = 0.1f;
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 
 		// 어썰트 부스트 방향 설정 및 캐릭터 회전 고정
 		Character->AssertBoostDir = Character->GetFollowCamera()->GetForwardVector();
@@ -58,5 +59,7 @@ void UAssertBoostState::UpdateState(class AArmoredCoreCharacter* Character, floa
 
 void UAssertBoostState::ExitState(class AArmoredCoreCharacter* Character)
 {
+	UE_LOG(LogTemp, Warning, TEXT("exit assert boost"));
 	Character->IsAssertBoostOn = false;
+	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 }
