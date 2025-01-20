@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "ArmoredCoreCharacter.generated.h"
@@ -18,13 +19,12 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 enum class EPlayerState : uint8
 {
 	Idle,
-	Attacking,
-	Moving,
 	Walking,
-	BoostOn,
-	AssertBoost,
+	Jumping,
+	Flying,
 	Falling,
-	Landing,
+	AssertBoost,
+	Attacking,
 };
 
 UCLASS(config=Game)
@@ -72,6 +72,10 @@ class AArmoredCoreCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
 
+
+public:
+	AArmoredCoreCharacter();
+	
 	// TimerHandles
 	FTimerHandle QuickBoostCoolTimeHandle;
 	
@@ -82,12 +86,8 @@ class AArmoredCoreCharacter : public ACharacter
 	FTimerHandle ToggleIsJumpTimerHandle;
 
 	FTimerHandle ToggleIsLandingTimerHandle;
-
-public:
-	AArmoredCoreCharacter();
 	
-
-protected:
+	void UpdatePlayerState(EPlayerState newState);
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -113,11 +113,7 @@ protected:
 	// Jump & Fly
 	virtual void Jump() override;
 	
-	void Fly();
-	
 	virtual void StopJumping() override;
-
-	virtual void Landed(const FHitResult& Hit) override;
 
 	void ToggleIsJump();
 
@@ -156,13 +152,13 @@ protected:
 	void RotateCharacterToAimDirection();
 
 	// ETC
-	void UpdatePlayerState(EPlayerState newState);
-	
 	void ToggleRotationToMovement();
 	
 	
 private:
 	FVector2D MovementVector;
+	
+	IPlayerMechState* CurrentState;
 	
 public:
 	/** Returns CameraBoom subobject **/
@@ -187,8 +183,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
-
-	EPlayerState PlayerState;
+	
+	EPlayerState CurrentStateEnum;
+	EPlayerState PreviousStateEnum;
 	
 	// BaseMove variance
 	bool IsMove;
@@ -197,7 +194,7 @@ public:
 	
 	FRotator WalkRotationRate;
 
-	bool IsJumping;
+	bool IsJumped;
 
 	bool IsFlying;
 

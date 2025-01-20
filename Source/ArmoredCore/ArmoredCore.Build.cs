@@ -14,7 +14,8 @@ public class ArmoredCore : ModuleRules
 		PublicIncludePaths.AddRange(new string[]
 		{
 			"ArmoredCore/Public",
-			"ArmoredCore/Public/Projectile"
+			"ArmoredCore/Public/Projectile",
+			"ArmoredCore/Public/PlayerState"
 		});
 	}
 }
