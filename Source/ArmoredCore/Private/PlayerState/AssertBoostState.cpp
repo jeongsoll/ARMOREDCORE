@@ -8,9 +8,11 @@
 #include "ArmoredCoreCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 void UAssertBoostState::EnterState(class AArmoredCoreCharacter* Character)
 {
+	UE_LOG(LogTemp,Warning,TEXT("UAssertBoostState::EnterState"));
 	if (Character->BoostGauge > 0.0f)
 		Character->IsAssertBoostOn = true;
 }
@@ -19,12 +21,18 @@ void UAssertBoostState::UpdateState(class AArmoredCoreCharacter* Character, floa
 {
 	if (Character->IsAssertBoostOn)
 	{
+		// 카메라 offset 변경
+		ChangeCameraOffset(Character,DeltaTime);
+		
 		// 부스터 사용시간 초기화
 		Character->BoostUsedTime = 0.0f;
-		
-		Character->IsMove = true;
+
+		// 부스터 상태 on으로 변경
 		Character->IsBoostOn = true;
+
+		// 마우스 감도 변경
 		Character->MouseSensitivity = 0.1f;
+		// 플레이어 input에 따른 rotation 변경 false
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 
 		// 어썰트 부스트 방향 설정 및 캐릭터 회전 고정
@@ -43,23 +51,28 @@ void UAssertBoostState::UpdateState(class AArmoredCoreCharacter* Character, floa
 			
 			Character->BoostGauge -= DeltaTime * 25.0f;
 		}
-	}
-	
-	// 어썰트 부스트를 직접끄거나 부스트 게이지가 0이 된다면 falling으로 변경
-	if (!Character->IsAssertBoostOn || Character->BoostGauge < 0.0f)
-	{
-		if (Character->IsAssertBoostLaunch)
-		{
-			Character->IsAssertBoostLaunch = false;
-			Character->MouseSensitivity = 1.0f;
-		}
-		Character->UpdatePlayerState(EPlayerState::Falling);
+
+		if (Character->BoostGauge <= 0.0f)
+			Character->UpdatePlayerState(EPlayerState::Falling);
 	}
 }
 
 void UAssertBoostState::ExitState(class AArmoredCoreCharacter* Character)
 {
-	UE_LOG(LogTemp, Warning, TEXT("exit assert boost"));
+	UE_LOG(LogTemp,Warning,TEXT("UAssertBoostState::ExitState"));
+
 	Character->IsAssertBoostOn = false;
 	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+	if (Character->IsAssertBoostLaunch)
+	{
+		Character->IsAssertBoostLaunch = false;
+		Character->MouseSensitivity = 1.0f;
+		Character->UpdatePlayerState(EPlayerState::Falling);
+	}
+}
+
+void UAssertBoostState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
+{
+	newSocket = UKismetMathLibrary::VInterpTo(Character->GetCameraBoom()->SocketOffset,FVector(0,200,-15),DeltaTime, 3.0f);
+	Character->GetCameraBoom()->SocketOffset = newSocket;
 }
