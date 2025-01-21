@@ -20,6 +20,7 @@
 #include "InputActionValue.h"
 #include "InteractiveToolManager.h"
 #include "JumpState.h"
+#include "LandState.h"
 #include "WalkState.h"
 #include "BaseGizmos/GizmoElementArrow.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -58,7 +59,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetRelativeLocation(FVector(-30.0f, 0.0f, 100.0f));
+	CameraBoom->SetRelativeLocation(FVector(-60.0f, 0.0f, 120.0f));
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->bEnableCameraLag = true;
@@ -134,7 +135,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	UpdatePlayerState(EPlayerState::Idle);
+	CurrentState = NewObject<UIdleState>(this);
 	
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
@@ -143,12 +144,8 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	WalkCameraLagSpeed = CameraBoom->CameraLagSpeed;
 	BoostCameraLagSpeed = 8.0f;
-	//QuickBoostCameraLagSpeed = 7.0f;
 	
 	IsMove = false;
-	IsJumped = false;
-	IsFlying = false;
-	IsLanding = false;
 	IsAttacking = false;
 
 	BaseGravity = 1.75f;
@@ -157,7 +154,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	MouseSensitivity = 1.0f;
 	
 	IsBoostOn = false;
-	BoostSpeed = 600.0f;
+	BoostSpeed = 800.0f;
 	BoostRotationRate = FRotator(0,150.0f,0);
 	
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
@@ -227,71 +224,34 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 
 	if (CurrentState)
 	{
-		UE_LOG(LogTemp,Warning,TEXT("%d"), CurrentStateEnum);
 		CurrentState->UpdateState(this, DeltaTime);
 	}
-	
-	UpdateCameraSettingsByMovementState();
+
+	// TODO
+	// 부스트 관련 함수들 전부 이동시키기
+
+	// 부스트의 카메라 연출 함수
+	UpdateCamera();
+	// 부스트 함수
 	UpdateBoostState();
 	UpdateBoostGauge();
-	ToggleRotationToMovement();
+	// 공격 함수
 	UpdateAttackState();
-}
-
-void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// state를 walk로 바꾸지 않는 이유
-		// fly state와 walk state가 동시에 생길 수 있어서
-		// ismove 변수만 true로 바꾸는 역할인 walking state는 적용하지 않는다.
-		IsMove = true;
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y, true);
-		AddMovementInput(RightDirection, MovementVector.X, true);
-		
-		QuickBoostDir = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
-		QuickBoostDir.Normalize();
-		
-	}
-}
-
-void AArmoredCoreCharacter::OnMoveComplete()
-{
-	IsMove = false;	
-}
-
-
-void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X * MouseSensitivity);
-		AddControllerPitchInput(LookAxisVector.Y * MouseSensitivity);
-	}
 }
 
 void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState NewState)
 {
 	if (CurrentStateEnum == NewState)
 		return;
+
+	if (CurrentStateEnum == EPlayerState::Falling)
+	{
+		if (NewState == EPlayerState::Flying || NewState == EPlayerState::Jumping)
+		{
+			if (BoostGauge <= 0.0f)
+				return;
+		}
+	}
 	
 	if (CurrentState)
 	{
@@ -318,93 +278,124 @@ void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState NewState)
 	case EPlayerState::Falling:
 		CurrentState = NewObject<UFallState>(this);
 		break;
+	case EPlayerState::Landing:
+		CurrentState = NewObject<ULandState>(this);
+		break;
 	case EPlayerState::AssertBoost:
 		CurrentState = NewObject<UAssertBoostState>(this);
 		break;
 	default:
-		UE_LOG(LogTemp, Warning, TEXT("Unhandled player state: %d"), (int32)NewState);
+		UE_LOG(LogTemp, Warning, TEXT("Unhandled player state: %d"), NewState);
 		break;
 	}
 
 	if (CurrentState)
+	{
 		CurrentState->EnterState(this);
-}
-
-
-void AArmoredCoreCharacter::BoostOn()
-{
-	if (IsMove)
-		IsBoostOn = true;
-}
-
-void AArmoredCoreCharacter::QuickBoost()
-{
-	if (CanQuickBoost)
-	{
-		IsQuickBoostTrigger = true;
-
-		if (IsMove && BoostGauge > 0)
-		{
-			BoostGauge -= 10.0f;
-			IsBoostOn = true;
-			FVector newVelocity = QuickBoostSpeed * QuickBoostDir;
-
-			// 바닥에 있는 상태일때는 퀵부스트에 UpVector를 더해주지 않기 위한 조건문
-			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
-				GetCharacterMovement()->GravityScale = FlyingGravity;
-			else
-				newVelocity += GetActorUpVector() * 450.0f;
-			
-			ACharacter::LaunchCharacter(newVelocity,true,true);
-
-			//CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
-			CanQuickBoost = false;
-			BoostUsedTime = 0.0f;
-			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,QuickBoostCoolTime,false);
-		}
 	}
 }
 
-void AArmoredCoreCharacter::UpdateBoostState()
+void AArmoredCoreCharacter::Look(const FInputActionValue& Value)
 {
-	if (!IsMove && GetCharacterMovement()->IsWalking())
-		IsBoostOn = false;
+	// input is a Vector2D
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X * MouseSensitivity);
+		AddControllerPitchInput(LookAxisVector.Y * MouseSensitivity);
+	}
+}
+
+void AArmoredCoreCharacter::Move(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+
+		if (CurrentStateEnum == EPlayerState::AssertBoost)
+			return;
+		
+		// state를 walk로 바꾸지 않는 이유
+		// fly state와 walk state가 동시에 생길 수 있어서
+		// ismove 변수만 true로 바꾸는 역할인 walking state는 적용하지 않는다.
+		//IsMove = true;
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	
-	if (IsBoostOn)
-	{
-		if (Body && LArm && RArm && Leg)
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
+		// get right vector 
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// add movement 
+		AddMovementInput(ForwardDirection, MovementVector.Y, true);
+		AddMovementInput(RightDirection, MovementVector.X, true);
 		
-		GetCharacterMovement()->MaxWalkSpeed = BoostSpeed;
-		GetCharacterMovement()->RotationRate = BoostRotationRate;
-		GetCharacterMovement()->BrakingFrictionFactor = 0.75f;
-	}
-	else
-	{
-		if (Body && LArm && RArm && Leg)
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
+		QuickBoostDir = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
+		QuickBoostDir.Normalize();
 		
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-		GetCharacterMovement()->RotationRate = WalkRotationRate;
-		GetCharacterMovement()->BrakingFrictionFactor = 1.0f;
 	}
 }
 
-void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
+void AArmoredCoreCharacter::OnMoveComplete()
 {
-	//UE_LOG(LogTemp,Warning,TEXT("rotation function in"));
+	UE_LOG(LogTemp, Warning, TEXT("OnMoveComplete"));
+	MovementVector = FVector2D::ZeroVector;
+	if (CurrentStateEnum != EPlayerState::AssertBoost && CurrentStateEnum != EPlayerState::Flying && CurrentStateEnum != EPlayerState::Falling)
+	{
+		UpdatePlayerState(EPlayerState::Idle);
+	}
+}
+
+// 점프 - 비행 - 추락 순서로 진행하기 위한 코드
+// 점프 할 때 발 구르기 후 비행해야 하기 때문에 timer사용
+void AArmoredCoreCharacter::Jump()
+{
+	if (CurrentStateEnum != EPlayerState::Jumping)
+	{
+		IsBoostOn = true;
+		if (CurrentStateEnum == EPlayerState::Falling)
+		{
+			// 떨어지는 도중에 space를 다시 누를 때의 코드
+			if (BoostGauge <= 0.0f)
+				return;
+			else
+			{
+				UpdatePlayerState(EPlayerState::Flying);
+				return;
+			}
+		}
+		else
+		{
+			LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
+		}
+
+		GetWorld()->GetTimerManager().SetTimer(ChangeJumpStateTimerHandle,this,&AArmoredCoreCharacter::ToggleToJumpState,0.3f,false);
+	}
+}
+
+void AArmoredCoreCharacter::ToggleToJumpState()
+{
+	UpdatePlayerState(EPlayerState::Jumping);
+}
+
+void AArmoredCoreCharacter::StopJumping()
+{
+	Super::StopJumping();
+	if (GetWorld()->GetTimerManager().IsTimerActive(ChangeJumpStateTimerHandle))
+		GetWorld()->GetTimerManager().ClearTimer(ChangeJumpStateTimerHandle);
+	
+	UpdatePlayerState(EPlayerState::Falling);
+}
+
+void AArmoredCoreCharacter::UpdateCamera()
+{
 	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
 	FRotator newRotator;
 
@@ -441,147 +432,20 @@ void AArmoredCoreCharacter::LerpRotateCameraByMoveInput()
 	FollowCamera->SetRelativeRotation(newRotator);
 }
 
-void AArmoredCoreCharacter::UpdateCameraSettingsByMovementState()
-{
-	// 플레이어 움직임 상태에 따른 카메라 lagSpeed, offset, rotation 설정
-	
-	LerpRotateCameraByMoveInput();
-	if (IsBoostOn)
-		CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
-	else
-		CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
-	
-	// 어썰트 부스트 사용 시, 카메라 offset이 달라지는 것을 lerp로 처리
-	if (IsAssertBoostOn)
-	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,200,-15),GetWorld()->GetDeltaSeconds(), 3.0f);
-		CameraBoom->SocketOffset = newSocket;
-	}
-	else if (IsFlying)
-	{
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(-50,0,-150),GetWorld()->GetDeltaSeconds(), 1.0f);
-		CameraBoom->SocketOffset = newSocket;
-	}
-	else
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
-		{
-			GetWorld()->GetTimerManager().ClearTimer(ToggleIsLandingTimerHandle);
-		}
-		FVector newSocket = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,FVector(0,0,0),GetWorld()->GetDeltaSeconds(), 5.0f);
-		CameraBoom->SocketOffset = newSocket;
-	}
-}
 
-void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
+void AArmoredCoreCharacter::BoostOn()
 {
-	GetCharacterMovement()->GravityScale = BaseGravity;
-	CanQuickBoost = true;
-}
-
-// 점프 - 비행 - 추락 순서로 진행하기 위한 코드
-// 점프 할 때 발 구르기 후 비행해야 하기 때문에 timer사용
-void AArmoredCoreCharacter::Jump()
-{
-	if (CurrentStateEnum != EPlayerState::Jumping)
-	{
-		if (CurrentStateEnum == EPlayerState::Falling)
-		{
-			// 떨어지는 도중에 space를 다시 누를 때의 코드
-			if (BoostGauge <= 0.0f)
-				return;
-			else
-			{
-				UpdatePlayerState(EPlayerState::Jumping);
-				return;
-			}
-		}
-		else if (GetCharacterMovement()->IsWalking())
-			LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
-
+	if (IsMove)
 		IsBoostOn = true;
-
-		GetWorld()->GetTimerManager().SetTimer(ToggleIsJumpTimerHandle,this,&AArmoredCoreCharacter::ToggleIsJump,0.3f,false);
-	}
 }
-
-void AArmoredCoreCharacter::ToggleIsJump()
-{
-	UpdatePlayerState(EPlayerState::Jumping);
-}
-
-void AArmoredCoreCharacter::StopJumping()
-{
-	// AChracter의 Stop Jumping을 override하여 movementmode를 설정해줌
-	Super::StopJumping();
-	if (GetWorld()->GetTimerManager().IsTimerActive(ToggleIsJumpTimerHandle))
-		GetWorld()->GetTimerManager().ClearTimer(ToggleIsJumpTimerHandle);
-
-	UpdatePlayerState(EPlayerState::Falling);
-}
-
-void AArmoredCoreCharacter::ToggleIsLanding()
-{
-	IsLanding = false;
-}
-
-void AArmoredCoreCharacter::AssertBoost()
-{
-	UpdatePlayerState(EPlayerState::AssertBoost);
-
-	// 공중이동 전, 순간 대쉬를 위한 timer 코드
-	if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
-		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
-}
-
-void AArmoredCoreCharacter::AssertBoostCancle()
-{
-	UpdatePlayerState(EPlayerState::Falling);
-}
-
-void AArmoredCoreCharacter::StartAssertBoostLaunch()
-{
-	if (!IsAssertBoostLaunch)
-	{
-		IsAssertBoostLaunch = true;
-		LaunchCharacter(AssertBoostDir * 2000.0f,true,true);
-	}
-}
-
-// void AArmoredCoreCharacter::UpdateAssertBoostFly()
-// {
-// 	if (IsAssertBoostOn)
-// 	{
-// 		AssertBoostDir = FollowCamera->GetForwardVector();
-// 		AssertBoostDir.Normalize();
-// 		FRotator ControlRotation = GetControlRotation();
-// 		FRotator YawRotation(0, ControlRotation.Yaw,0);
-// 		SetActorRotation(YawRotation);
-//
-// 		if (IsAssertBoostLaunch)
-// 		{
-// 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-// 			GetCharacterMovement()->GravityScale = FlyingGravity;
-// 			AddMovementInput(AssertBoostDir,7.0f,true);
-// 		}
-// 	}
-// 	else
-// 	{
-// 		if (IsAssertBoostLaunch)
-// 		{
-// 			// 어썰트 부스트를 부스트 게이지 만큼 다 사용한 후 부스트가 꺼질 때를 위한 코드
-// 			// IsAssertBoostOn 이 false면 이 부분이 계속 불리기 때문에 오류가 생김
-// 			// 그렇기에 IsAssertBoostLaunch도 어차피 false로 바꿔야 하니 그전에 아래 코드를 수행하게함
-// 			IsAssertBoostLaunch = false;
-// 			GetCharacterMovement()->SetMovementMode(MOVE_Falling);
-// 			GetCharacterMovement()->GravityScale = BaseGravity;
-// 			MouseSensitivity = 1.0f;
-// 		}
-// 	}
-// }
 
 void AArmoredCoreCharacter::UpdateBoostGauge()
 {
+	if (BoostGauge <= 0.0f)
+	{
+		BoostGauge = 0.0f;
+	}
+	
 	if (BoostUsedTime >= 3.0f)
 	{
 		if (BoostGauge < 100.0f &&
@@ -608,10 +472,104 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 	}
 }
 
+void AArmoredCoreCharacter::UpdateBoostState()
+{
+	if (IsBoostOn)
+	{
+		if (Body && LArm && RArm && Leg)
+		{
+			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
+			if (AllBodyMaterial)
+			{
+				Body->SetMaterial(0, AllBodyMaterial);
+			}
+		}
+
+		CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = BoostSpeed;
+		GetCharacterMovement()->RotationRate = BoostRotationRate;
+		GetCharacterMovement()->BrakingFrictionFactor = 0.75f;
+	}
+	else
+	{
+		if (Body && LArm && RArm && Leg)
+		{
+			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+			if (AllBodyMaterial)
+			{
+				Body->SetMaterial(0, AllBodyMaterial);
+			}
+		}
+
+		CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		GetCharacterMovement()->RotationRate = WalkRotationRate;
+		GetCharacterMovement()->BrakingFrictionFactor = 1.0f;
+	}
+}
+
+void AArmoredCoreCharacter::QuickBoost()
+{
+	if (CanQuickBoost)
+	{
+		IsQuickBoostTrigger = true;
+
+		if (IsMove && BoostGauge > 0)
+		{
+			IsBoostOn = true;
+			BoostGauge -= 10.0f;
+			FVector newVelocity = QuickBoostSpeed * QuickBoostDir;
+
+			// 바닥에 있는 상태일때는 퀵부스트에 UpVector를 더해주지 않기 위한 조건문
+			if (GetCharacterMovement()->IsFlying() || GetCharacterMovement()->IsFalling())
+				GetCharacterMovement()->GravityScale = FlyingGravity;
+			else
+				newVelocity += GetActorUpVector() * 450.0f;
+			
+			ACharacter::LaunchCharacter(newVelocity,true,true);
+
+			CanQuickBoost = false;
+			BoostUsedTime = 0.0f;
+			GetWorld()->GetTimerManager().SetTimer(QuickBoostCoolTimeHandle,this,&AArmoredCoreCharacter::ResetQuickBoostCoolTime,QuickBoostCoolTime,false);
+		}
+	}
+}
+
+void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
+{
+	GetCharacterMovement()->GravityScale = BaseGravity;
+	CanQuickBoost = true;
+}
+
+void AArmoredCoreCharacter::AssertBoost()
+{
+	UpdatePlayerState(EPlayerState::AssertBoost);
+
+	// 공중이동 전, 순간 대쉬를 위한 timer 코드
+	if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
+}
+
+void AArmoredCoreCharacter::AssertBoostCancle()
+{
+	if (CurrentStateEnum == EPlayerState::AssertBoost)
+		UpdatePlayerState(EPlayerState::Falling);
+}
+
+void AArmoredCoreCharacter::StartAssertBoostLaunch()
+{
+	if (!IsAssertBoostLaunch)
+	{
+		IsAssertBoostLaunch = true;
+		LaunchCharacter(AssertBoostDir * 2000.0f,true,true);
+	}
+}
+
 void AArmoredCoreCharacter::UpdateAttackState()
 {
 	if (IsAttacking)
 	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 		AimDirection = FollowCamera->GetForwardVector();
 		AimDirection.Normalize();
 		RotateCharacterToAimDirection();
@@ -632,10 +590,6 @@ void AArmoredCoreCharacter::MakeProjectile()
 
 void AArmoredCoreCharacter::FirePressed()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("FirePressed"));
-	if (IsAssertBoostOn)
-		return;
-
 	IsAttacking = true;
 	if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
@@ -645,14 +599,13 @@ void AArmoredCoreCharacter::FirePressed()
 
 void AArmoredCoreCharacter::FireReleased()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("FireReleased"));
-	if (IsAssertBoostOn)
-		return;
+	IsAttacking = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
 	if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
 	}
-	IsAttacking = false;
 }
 
 void AArmoredCoreCharacter::RotateCharacterToAimDirection()
@@ -661,19 +614,4 @@ void AArmoredCoreCharacter::RotateCharacterToAimDirection()
 	FRotator YawRotation(0, ControlRotation.Yaw,0);
 	FRotator newRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(),YawRotation,GetWorld()->GetDeltaSeconds(),5.0f);
 	SetActorRotation(newRotation);
-}
-
-void AArmoredCoreCharacter::ToggleRotationToMovement()
-{
-	// Tick에서 controller input에 따른 rotation 관리 설정을 할지 안할지에 대한 함수
-	if (!IsMove && IsFlying)
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-	else if (IsMove && IsFlying)
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-	else if (IsAttacking || IsAssertBoostOn)
-	{
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-	}
-	else
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 }

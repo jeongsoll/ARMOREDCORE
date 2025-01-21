@@ -9,8 +9,7 @@
 
 void UJumpState::EnterState(class AArmoredCoreCharacter* Character)
 {
-	UE_LOG(LogTemp, Display, TEXT("Entering UJumpState::EnterState"));
-	Character->IsJumped = true;
+	UE_LOG(LogTemp, Warning, TEXT("UJumpState::EnterState"));
 }
 
 void UJumpState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
@@ -20,4 +19,5 @@ void UJumpState::UpdateState(class AArmoredCoreCharacter* Character, float Delta
 
 void UJumpState::ExitState(class AArmoredCoreCharacter* Character)
 {
+	UE_LOG(LogTemp, Warning, TEXT("UJumpState::ExitState"));
 }

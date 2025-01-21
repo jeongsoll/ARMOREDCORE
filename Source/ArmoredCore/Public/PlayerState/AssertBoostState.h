@@ -18,4 +18,5 @@ public:
 	virtual void EnterState(class AArmoredCoreCharacter* Character) override;
 	virtual void UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime) override;
 	virtual void ExitState(class AArmoredCoreCharacter* Character) override;
+	virtual void ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime) override;
 };

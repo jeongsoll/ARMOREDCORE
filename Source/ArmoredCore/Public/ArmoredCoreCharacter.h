@@ -23,8 +23,8 @@ enum class EPlayerState : uint8
 	Jumping,
 	Flying,
 	Falling,
+	Landing,
 	AssertBoost,
-	Attacking,
 };
 
 UCLASS(config=Game)
@@ -76,48 +76,29 @@ class AArmoredCoreCharacter : public ACharacter
 public:
 	AArmoredCoreCharacter();
 	
-	// TimerHandles
-	FTimerHandle QuickBoostCoolTimeHandle;
-	
-	FTimerHandle AssertBoostLaunchHandle;
+	virtual void BeginPlay() override;
 
-	FTimerHandle LArmFireTimerHandle;
-
-	FTimerHandle ToggleIsJumpTimerHandle;
-
-	FTimerHandle ToggleIsLandingTimerHandle;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
-	void UpdatePlayerState(EPlayerState newState);
+	virtual void Tick(float DeltaTime) override;
 	
-	/** Called for movement input */
+	void UpdatePlayerState(const EPlayerState newState);
+	
+	void Look(const FInputActionValue& Value);
+	
 	void Move(const FInputActionValue& Value);
 
 	void OnMoveComplete();
 
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
-	
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// To add mapping context
-	virtual void BeginPlay() override;
-
-	virtual void Tick(float DeltaTime) override;
-
-	// Camera
-	void UpdateCameraSettingsByMovementState();
-	
-	void LerpRotateCameraByMoveInput();
-
 	// Jump & Fly
 	virtual void Jump() override;
 	
+	void ToggleToJumpState();
+	
 	virtual void StopJumping() override;
-
-	void ToggleIsJump();
-
-	void ToggleIsLanding();
+	
+	// Camera
+	void UpdateCamera();
 	
 	// Boost Function
 	void BoostOn();
@@ -138,8 +119,6 @@ public:
 
 	void StartAssertBoostLaunch();
 
-	void UpdateAssertBoostFly();
-
 	// Attack Function
 	void UpdateAttackState();
 
@@ -150,15 +129,10 @@ public:
 	void FireReleased();
 
 	void RotateCharacterToAimDirection();
-
-	// ETC
-	void ToggleRotationToMovement();
 	
 	
 private:
-	FVector2D MovementVector;
-	
-	IPlayerMechState* CurrentState;
+	class IPlayerMechState* CurrentState;
 	
 public:
 	/** Returns CameraBoom subobject **/
@@ -183,22 +157,32 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
-	
+
+	// Enum variance
 	EPlayerState CurrentStateEnum;
+	
 	EPlayerState PreviousStateEnum;
+
+	// TimerHandles
+	FTimerHandle QuickBoostCoolTimeHandle;
+	
+	FTimerHandle AssertBoostLaunchHandle;
+
+	FTimerHandle LArmFireTimerHandle;
+
+	FTimerHandle ChangeJumpStateTimerHandle;
+
+	FTimerHandle ToggleIsLandingTimerHandle;
 	
 	// BaseMove variance
+	FVector2D MovementVector;
+
+	UPROPERTY(BlueprintReadOnly)
 	bool IsMove;
 	
 	float WalkSpeed;
 	
 	FRotator WalkRotationRate;
-
-	bool IsJumped;
-
-	bool IsFlying;
-
-	bool IsLanding;
 
 	UPROPERTY(EditAnywhere)
 	float MaxHP{9080.0f};
@@ -267,9 +251,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
-
-	// EasingClass Variance
-	float cTime;
-	float alpha;
+	
 };
 
