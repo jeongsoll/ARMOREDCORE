@@ -15,7 +15,7 @@ void UFallState::EnterState(class AArmoredCoreCharacter* Character)
 void UFallState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
 	if (Character->MovementVector != FVector2d::ZeroVector)
-		Character->GetCharacterMovement()->GravityScale = Character->FlyingGravity;
+		Character->GetCharacterMovement()->GravityScale = Character->FallingGravity;
 	else
 	{
 		Character->GetCharacterMovement()->GravityScale = Character->BaseGravity;

@@ -3,6 +3,7 @@
 #include "ArmoredCoreCharacter.h"
 
 #include "AssertBoostState.h"
+#include "AsyncTreeDifferences.h"
 #include "Bullet.h"
 #include "EasingFunction.h"
 #include "Engine/LocalPlayer.h"
@@ -22,6 +23,7 @@
 #include "JumpState.h"
 #include "LandState.h"
 #include "WalkState.h"
+#include "Weapon.h"
 #include "BaseGizmos/GizmoElementArrow.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/UnitConversion.h"
@@ -192,7 +194,14 @@ void AArmoredCoreCharacter::BeginPlay()
 
 	// 공격
 	IsAttacking = false;
+	LArmWeapon = NewObject<UWeapon>(this);
+	RArmWeapon = NewObject<UWeapon>(this);
+	RShoulderWeapon = NewObject<UWeapon>(this);
 
+	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
+	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
+	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
+	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -230,9 +239,10 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(AssertBoostCancleAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoostCancle);
 	
 		// LArmFire
-		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::FirePressed);
-		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::FireReleased);
+		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::LArmFirePressed);
+		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::LArmFireReleased);
 	}
+	
 	else
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
@@ -600,28 +610,52 @@ void AArmoredCoreCharacter::UpdateAttackState()
 	}
 }
 
-void AArmoredCoreCharacter::MakeProjectile()
+void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 {
-	// TODO
-	// bool 변수를 만들어서(or switch) 왼쪽무기, 오른쪽무기, 오른쪽 어깨 중에 어떤 무기의 발사체를 발사하는지 확인하기
-	UE_LOG(LogTemp, Warning, TEXT("MakeBullet"));
-	
-	FTransform transform = LArmFirePos->GetComponentTransform();
-	ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
-	check(projectile);
-	projectile->FireInDirection(AimDirection);
+	FTransform transform;
+	if (weaponPos == EPlayerUsedWeaponPos::LArm)
+	{
+		transform = LArmFirePos->GetComponentTransform();
+		ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+		if (projectile)
+		{
+			if (LArmWeapon->RemainArmor <= 0)
+			{
+				if (LArmWeapon->Magazine <= 0)
+					return;
+				
+				//리로딩
+				UE_LOG(LogTemp,Warning,TEXT("Reloading Armor"));
+				LArmWeapon->Magazine -= LArmWeapon->MaxArmor;
+				LArmWeapon->RemainArmor = LArmWeapon->MaxArmor;
+			}
+			LArmWeapon->RemainArmor -= 1;
+			projectile->Damage = LArmWeapon->Damage;
+			projectile->FireInDirection(AimDirection);
+			
+		}
+	}
+	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
+	{
+		// 아직 미구현
+		
+	}
+	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
+	{
+		// 아직 미구현
+	}
 }
 
-void AArmoredCoreCharacter::FirePressed()
+void AArmoredCoreCharacter::LArmFirePressed()
 {
 	IsAttacking = true;
 	if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
 	{
-		GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,this,&AArmoredCoreCharacter::MakeProjectile,0.3f,true);
+		GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::LArm);},0.3f,true);
 	}
 }
 
-void AArmoredCoreCharacter::FireReleased()
+void AArmoredCoreCharacter::LArmFireReleased()
 {
 	IsAttacking = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;

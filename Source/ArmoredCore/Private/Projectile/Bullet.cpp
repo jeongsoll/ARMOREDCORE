@@ -3,6 +3,8 @@
 
 #include "Bullet.h"
 
+#include "ArmoredCoreCharacter.h"
+#include "JS_Boss.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
@@ -43,6 +45,9 @@ ABullet::ABullet()
 	ProjectileMovementComponent->bShouldBounce = true;
 	ProjectileMovementComponent->Bounciness = 0.3f;
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
+
+	Root->SetGenerateOverlapEvents(true);
+	Root->SetCollisionProfileName(TEXT("Bullet"));
 	
 }
 
@@ -50,6 +55,7 @@ ABullet::ABullet()
 void ABullet::BeginPlay()
 {
 	Super::BeginPlay();
+	Root->OnComponentBeginOverlap.AddDynamic(this,&ABullet::OnMyBeginOverlap);
 	LifeTime = 8.0f;
 }
 
@@ -61,6 +67,24 @@ void ABullet::Tick(float DeltaTime)
 	if (CurrentTime > LifeTime)
 		this->Destroy();
 }
+
+void ABullet::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult)
+{
+	auto* boss = Cast<AJS_Boss>(OtherActor);
+	if (boss)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Boss hit"));
+		Destroy();
+	}
+
+	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
+	if (player)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Player hit"));
+		Destroy();
+	}
+}
+
 
 void ABullet::FireInDirection(const FVector& ShootDirection)
 {

@@ -28,6 +28,21 @@ enum class EPlayerState : uint8
 	AssertBoost,
 };
 
+enum class EPlayerWeapon : uint8
+{
+	Rifle,
+	Missile,
+	BeamSaber,
+};
+
+enum class EPlayerUsedWeaponPos : uint8
+{
+	LArm,
+	RArm,
+	LShoulder,
+	RShoulder,
+};
+
 UCLASS(config=Game)
 class AArmoredCoreCharacter : public ACharacter
 {
@@ -123,11 +138,11 @@ public:
 	// Attack Function
 	void UpdateAttackState();
 
-	void MakeProjectile();
+	void MakeProjectile(EPlayerUsedWeaponPos weaponPos);
 	
-	void FirePressed();
+	void LArmFirePressed();
 
-	void FireReleased();
+	void LArmFireReleased();
 
 	void RotateCharacterToAimDirection();
 	
@@ -174,14 +189,19 @@ public:
 	EPlayerState PreviousStateEnum;
 
 	// TimerHandles
+	UPROPERTY()
 	FTimerHandle QuickBoostCoolTimeHandle;
-	
+
+	UPROPERTY()
 	FTimerHandle AssertBoostLaunchHandle;
 
+	UPROPERTY()
 	FTimerHandle LArmFireTimerHandle;
 
+	UPROPERTY()
 	FTimerHandle ChangeJumpStateTimerHandle;
 
+	UPROPERTY()
 	FTimerHandle ToggleIsLandingTimerHandle;
 	
 	// BaseMove variance
@@ -196,7 +216,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MaxHP{9080.0f};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CurrentHP{CurrentHP = MaxHP};
 	
 	
@@ -247,6 +267,13 @@ public:
 	bool IsAttacking;
 	
 	FVector AimDirection;
+
+	class UWeapon* LArmWeapon;
+	class UWeapon* RArmWeapon;
+	class UWeapon* RShoulderWeapon;
+
+	
+	
 	
 	// ETC
 	float WalkCameraLagSpeed;
