@@ -135,24 +135,41 @@ void AArmoredCoreCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// state
+	CurrentStateEnum = EPlayerState::Idle;
 	CurrentState = NewObject<UIdleState>(this);
+	CurrentState->EnterState(this);
+
+	// ui 생성
+	MainUI = CreateWidget<UPlayerMainUI>(GetWorld(),
+		MainUIFactory);
+	
+	if (MainUI)
+	{
+		MainUI->AddToViewport();
+	}
 	
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
+	// 이동
+	IsMove = false;
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	WalkRotationRate = GetCharacterMovement()->RotationRate;
-	
+
+	// 카메라
 	WalkCameraLagSpeed = CameraBoom->CameraLagSpeed;
 	BoostCameraLagSpeed = 8.0f;
-	
-	IsMove = false;
-	IsAttacking = false;
 
+	// 마우스 민감도
+	MouseSensitivity = 1.0f;
+
+	// 중력
 	BaseGravity = 1.75f;
 	FlyingGravity = 0.1f;
+	FallingGravity = 0.7f;
 
-	MouseSensitivity = 1.0f;
-	
+
+	// 부스트
 	IsBoostOn = false;
 	BoostSpeed = 800.0f;
 	BoostRotationRate = FRotator(0,150.0f,0);
@@ -160,7 +177,8 @@ void AArmoredCoreCharacter::BeginPlay()
 	// 부스트 사용하는 기술(퀵 부스트, 어썰트 부스트) 사용 후
 	// 이어서 부스트 사용하는 기술을 사용하지 않은 상태로 3초가 지나면
 	// 부스트를 회복한다.
-	BoostGauge = 100.0f;
+	MaxBoostGauge = 100.0f;
+	BoostGauge = MaxBoostGauge;
 	IsBoostChargeStart = false;
 	BoostUsedTime = 0.0f;
 	
@@ -168,9 +186,12 @@ void AArmoredCoreCharacter::BeginPlay()
 	IsQuickBoostTrigger = false;
 	QuickBoostSpeed = 2500.0f;
 	QuickBoostCoolTime = 0.65f;
-
+	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
+
+	// 공격
+	IsAttacking = false;
 
 }
 
@@ -203,8 +224,8 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::Look);
 
 		// Boost
-		EnhancedInputComponent->BindAction(BoostOnAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::BoostOn);
-		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Triggered, this, &AArmoredCoreCharacter::QuickBoost);
+		EnhancedInputComponent->BindAction(BoostOnAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::BoostOn);
+		EnhancedInputComponent->BindAction(QuickBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::QuickBoost);
 		EnhancedInputComponent->BindAction(AssertBoostAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoost);
 		EnhancedInputComponent->BindAction(AssertBoostCancleAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::AssertBoostCancle);
 	
@@ -242,7 +263,10 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState NewState)
 {
 	if (CurrentStateEnum == NewState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Player state already in progress"));
 		return;
+	}
 
 	if (CurrentStateEnum == EPlayerState::Falling)
 	{
@@ -446,7 +470,7 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 		BoostGauge = 0.0f;
 	}
 	
-	if (BoostUsedTime >= 3.0f)
+	if (BoostUsedTime >= 2.0f)
 	{
 		if (BoostGauge < 100.0f &&
 			!GetCharacterMovement()->IsFlying() &&

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerMainUI.h"
 #include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
@@ -132,7 +133,7 @@ public:
 	
 	
 private:
-	class IPlayerMechState* CurrentState;
+	
 	
 public:
 	/** Returns CameraBoom subobject **/
@@ -158,7 +159,16 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
 
+	UPROPERTY()
+	class UPlayerMainUI* MainUI;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UPlayerMainUI> MainUIFactory;
+	
+	
 	// Enum variance
+	class IPlayerMechState* CurrentState;
+	
 	EPlayerState CurrentStateEnum;
 	
 	EPlayerState PreviousStateEnum;
@@ -200,6 +210,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostGauge;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
+	float MaxBoostGauge;	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostUsedTime;
@@ -240,17 +253,14 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float BoostCameraLagSpeed;
-	
-	//UPROPERTY(EditAnywhere)
-	//float QuickBoostCameraLagSpeed;
 
 	float BaseGravity;
 	
-	UPROPERTY(EditAnywhere)
 	float FlyingGravity;
+
+	float FallingGravity;
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
-	
 };
 
