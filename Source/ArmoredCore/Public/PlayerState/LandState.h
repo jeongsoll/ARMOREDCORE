@@ -5,18 +5,17 @@
 #include "CoreMinimal.h"
 #include "PlayerMechState.h"
 #include "UObject/Object.h"
-#include "FlyState.generated.h"
+#include "LandState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ARMOREDCORE_API UFlyState : public UObject, public IPlayerMechState
+class ARMOREDCORE_API ULandState : public UObject, public IPlayerMechState
 {
 	GENERATED_BODY()
 public:
 	virtual void EnterState(class AArmoredCoreCharacter* Character) override;
 	virtual void UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime) override;
 	virtual void ExitState(class AArmoredCoreCharacter* Character) override;
-	virtual void ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime) override;
 };
