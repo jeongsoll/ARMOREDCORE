@@ -3,6 +3,8 @@
 
 #include "Weapon.h"
 
+#include "Aim.h"
+
 UWeapon::UWeapon()
 {
 	Damage = 0;
@@ -10,12 +12,14 @@ UWeapon::UWeapon()
 	MaxArmor = 0;
 	RemainArmor = 0;
 	IsReloading = false;
+	IsProjectile = false;
 }
 
 void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
 {
 	if (choosedWeapon == EPlayerWeapon::Rifle)
 	{
+		IsProjectile = true;
 		Damage = 100.0f;
 		ReloadTime = 3.0f;
 		Magazine = 360;
@@ -24,6 +28,7 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
 	}
 	else if (choosedWeapon == EPlayerWeapon::Missile)
 	{
+		IsProjectile = true;
 		Damage = 500.0f;
 		ReloadTime = 5.0f;
 		Magazine = 100;
@@ -32,7 +37,8 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
 	}
 	else
 	{
-		UE_LOG(LogTemp,Warning,TEXT("beam saber called"));
+		UE_LOG(LogTemp,Warning,TEXT("Beam saber called"));
+		IsProjectile = false;
 	}
 }
 
@@ -55,5 +61,8 @@ void UWeapon::RefillArmor()
 		RemainArmor = MaxArmor;
 		Magazine -= MaxArmor;
 		IsReloading = false;
+		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
+		AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+		player->MainUI->PlayerAim->SetArmorValue(RemainArmor,MaxArmor);
 	}
 }

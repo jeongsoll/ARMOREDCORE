@@ -27,8 +27,9 @@ public:
 	int32 MaxArmor;
 	UPROPERTY(EditAnywhere)
 	int32 RemainArmor;
-	UPROPERTY(EditAnywhere)
+	
 	bool IsReloading;
+	bool IsProjectile;
 
 	void SetChoosenWeapon(EPlayerWeapon choosedWeapon);
 	void Reload();

@@ -88,6 +88,9 @@ class AArmoredCoreCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LArmFireAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RArmFireAction;	
+
 
 public:
 	AArmoredCoreCharacter();
@@ -143,6 +146,10 @@ public:
 	void LArmFirePressed();
 
 	void LArmFireReleased();
+	
+	void RArmFirePressed();
+	
+	void RArmFireReleased();
 
 	void RotateCharacterToAimDirection();
 	
@@ -155,18 +162,6 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Body;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Leg;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* LArm;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* RArm;
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* LArmFirePos;
@@ -197,6 +192,9 @@ public:
 
 	UPROPERTY()
 	FTimerHandle LArmFireTimerHandle;
+
+	UPROPERTY()
+	FTimerHandle RArmFireTimerHandle;
 
 	UPROPERTY()
 	FTimerHandle ChangeJumpStateTimerHandle;
@@ -271,6 +269,7 @@ public:
 	class UWeapon* LArmWeapon;
 	class UWeapon* RArmWeapon;
 	class UWeapon* RShoulderWeapon;
+
 
 	
 	

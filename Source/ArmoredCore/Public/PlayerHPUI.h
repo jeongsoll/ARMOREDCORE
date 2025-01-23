@@ -14,12 +14,13 @@ class ARMOREDCORE_API UPlayerHPUI : public UUserWidget
 {
 	GENERATED_BODY()
 	float maxHP;
+	float currentHP;
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry & MyGeometry, float DeltaSeconds) override;
 
 	UFUNCTION(BlueprintCallable)
-	void SetPlayerHPUI(float playerHP);
+	void SetPlayerHPUI();
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HPBar;

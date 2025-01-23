@@ -19,5 +19,11 @@ public:
 
 	UPROPERTY(meta=(BindWidget))
 	class UPlayerBoostGaugeUI* PlayerBoostGaugeUI;
+
+	UPROPERTY(meta=(BindWidget))
+	class UPlayerWeaponUI* PlayerWeaponUI;
+
+	UPROPERTY(meta=(BindWidget))
+	class UAim* PlayerAim;
 	
 };
