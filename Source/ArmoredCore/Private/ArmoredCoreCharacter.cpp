@@ -23,6 +23,7 @@
 #include "InteractiveToolManager.h"
 #include "JumpState.h"
 #include "LandState.h"
+#include "MovieSceneTracksComponentTypes.h"
 #include "WalkState.h"
 #include "Weapon.h"
 #include "BaseGizmos/GizmoElementArrow.h"
@@ -76,44 +77,12 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-	// 임시용 바디
-	LArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LArm"));
-	RArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RArm"));
-
 	LArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("LArmFirePos"));
 	RArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RArmFirePos"));
-	
-	LArm->SetupAttachment(GetMesh());
-	RArm->SetupAttachment(GetMesh());
 
-	LArmFirePos->SetupAttachment(LArm);
-	LArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
-	RArmFirePos->SetupAttachment(RArm);
-	RArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
+	LArmFirePos->SetupAttachment(GetMesh());
+	RArmFirePos->SetupAttachment(GetMesh());
 
-	if (LArm and RArm)
-	{
-		UStaticMesh* AllBodyMesh = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cube.cube"));
-		if (AllBodyMesh)
-		{
-			LArm->SetStaticMesh(AllBodyMesh);
-			RArm->SetStaticMesh(AllBodyMesh);
-		}
-
-		UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-		if (AllBodyMaterial)
-		{
-			LArm->SetMaterial(0, AllBodyMaterial);
-			RArm->SetMaterial(0, AllBodyMaterial);
-		}
-		LArm->SetRelativeScale3D(FVector3d(1.5f,0.2f,0.2f));
-		LArm->SetRelativeLocation(FVector3d(35.0f,-50.0f,0.0f));
-
-		RArm->SetRelativeScale3D(FVector3d(1.5f,0.2f,0.2f));
-		RArm->SetRelativeLocation(FVector3d(35.0f,50.0f,0.0f));
-	}
-
-	GetMesh()->SetRelativeLocation(FVector(0,0,-10));
 	GetMesh()->SetGenerateOverlapEvents(false);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
@@ -161,12 +130,27 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
+
+	
+	// 공격
+	IsAttacking = false;
+
 }
 
 void AArmoredCoreCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	FName SocketName = TEXT("FirePos");
+	if (GetMesh()->DoesSocketExist(SocketName))
+	{
+		RArmFirePos->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on SkeletalMesh"), *SocketName.ToString());
+	}
 
 	// state
 	CurrentStateEnum = EPlayerState::Idle;
@@ -182,15 +166,12 @@ void AArmoredCoreCharacter::BeginPlay()
 		MainUI->AddToViewport();
 	}
 	
-	// 공격
-	IsAttacking = false;
 	LArmWeapon = NewObject<UWeapon>(this);
 	RArmWeapon = NewObject<UWeapon>(this);
 	RShoulderWeapon = NewObject<UWeapon>(this);
 
-	//무기
-	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
-	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
+	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
+	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
 	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
 }
 
@@ -231,6 +212,10 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// LArmFire
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::LArmFirePressed);
 		EnhancedInputComponent->BindAction(LArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::LArmFireReleased);
+
+		// RArmFire
+		EnhancedInputComponent->BindAction(RArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::RArmFirePressed);
+		EnhancedInputComponent->BindAction(RArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::RArmFireReleased);
 	}
 	
 	else
@@ -589,30 +574,29 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 	{
 		if (!LArmWeapon->IsProjectile)
 			return;
-		
-		transform = LArmFirePos->GetComponentTransform();
-
-		if (LArmWeapon->RemainArmor <= 0)
-		{
-			LArmWeapon->Reload();
-		}
-		else if (LArmWeapon->RemainArmor > 0)
-		{
-			LArmWeapon->RemainArmor -= 1;
-			ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
-			if (projectile)
-			{
-				projectile->Damage = LArmWeapon->Damage;
-				projectile->FireInDirection(AimDirection);
-				//MainUI->PlayerAim->SetArmorValue(LArmWeapon->RemainArmor,LArmWeapon->MaxArmor);
-			}
-		}
-		
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
 		if (!RArmWeapon->IsProjectile)
 			return;
+
+		transform = RArmFirePos->GetComponentTransform();
+		
+
+		if (RArmWeapon->RemainArmor <= 0)
+		{
+			RArmWeapon->Reload();
+		}
+		else if (RArmWeapon->RemainArmor > 0)
+		{
+			RArmWeapon->RemainArmor -= 1;
+			ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+			if (projectile)
+			{
+				projectile->Damage = RArmWeapon->Damage;
+				projectile->FireInDirection(AimDirection);
+			}
+		}
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
@@ -623,21 +607,41 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 
 void AArmoredCoreCharacter::LArmFirePressed()
 {
-	IsAttacking = true;
-	if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-	{
-		GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::LArm);},0.3f,true);
-	}
+	// IsAttacking = true;
+	// if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
+	// {
+	// 	GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::LArm);},0.3f,true);
+	// }
 }
 
 void AArmoredCoreCharacter::LArmFireReleased()
 {
+	// IsAttacking = false;
+	// GetCharacterMovement()->bOrientRotationToMovement = true;
+	//
+	// if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
+	// {
+	// 	GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
+	// }
+}
+
+void AArmoredCoreCharacter::RArmFirePressed()
+{
+	IsAttacking = true;
+	if (!GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
+	{
+		GetWorld()->GetTimerManager().SetTimer(RArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::RArm);},0.3f,true);
+	}
+}
+
+void AArmoredCoreCharacter::RArmFireReleased()
+{
 	IsAttacking = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
+	if (GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
 	{
-		GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
+		GetWorld()->GetTimerManager().ClearTimer(RArmFireTimerHandle);
 	}
 }
 
