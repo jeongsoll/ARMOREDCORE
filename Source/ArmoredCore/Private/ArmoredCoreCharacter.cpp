@@ -77,16 +77,12 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
 	// 임시용 바디
-	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
-	Leg = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Leg"));
 	LArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LArm"));
 	RArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RArm"));
 
 	LArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("LArmFirePos"));
 	RArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RArmFirePos"));
 	
-	Body->SetupAttachment(GetMesh());
-	Leg->SetupAttachment(GetMesh());
 	LArm->SetupAttachment(GetMesh());
 	RArm->SetupAttachment(GetMesh());
 
@@ -95,13 +91,11 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	RArmFirePos->SetupAttachment(RArm);
 	RArmFirePos->SetRelativeLocation(FVector(53.0f, 0.0f, 0.0f));
 
-	if (Body and LArm and RArm and Leg)
+	if (LArm and RArm)
 	{
 		UStaticMesh* AllBodyMesh = LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cube.cube"));
 		if (AllBodyMesh)
 		{
-			Body->SetStaticMesh(AllBodyMesh);
-			Leg->SetStaticMesh(AllBodyMesh);
 			LArm->SetStaticMesh(AllBodyMesh);
 			RArm->SetStaticMesh(AllBodyMesh);
 		}
@@ -109,18 +103,9 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 		UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 		if (AllBodyMaterial)
 		{
-			Body->SetMaterial(0, AllBodyMaterial);
-			Leg->SetMaterial(0, AllBodyMaterial);
 			LArm->SetMaterial(0, AllBodyMaterial);
 			RArm->SetMaterial(0, AllBodyMaterial);
 		}
-
-		Body->SetRelativeScale3D(FVector3d(0.65f,0.65f,1.0f));
-		Body->SetRelativeLocation(FVector3d(0.0f,0.0f,20.0f));
-
-		Leg->SetRelativeScale3D(FVector3d(1.0f,1.2f,0.4f));
-		Leg->SetRelativeLocation(FVector3d(0.0f,0.0f,-50.0f));
-
 		LArm->SetRelativeScale3D(FVector3d(1.5f,0.2f,0.2f));
 		LArm->SetRelativeLocation(FVector3d(35.0f,-50.0f,0.0f));
 
@@ -515,15 +500,6 @@ void AArmoredCoreCharacter::UpdateBoostState()
 {
 	if (IsBoostOn)
 	{
-		if (Body && LArm && RArm && Leg)
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Script/Engine.Material'/Game/JJH/BoostMaterial.BoostMaterial'"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
-
 		CameraBoom->CameraLagSpeed = BoostCameraLagSpeed;
 		GetCharacterMovement()->MaxWalkSpeed = BoostSpeed;
 		GetCharacterMovement()->RotationRate = BoostRotationRate;
@@ -531,15 +507,6 @@ void AArmoredCoreCharacter::UpdateBoostState()
 	}
 	else
 	{
-		if (Body && LArm && RArm && Leg)
-		{
-			UMaterial* AllBodyMaterial = LoadObject<UMaterial>(nullptr,TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-			if (AllBodyMaterial)
-			{
-				Body->SetMaterial(0, AllBodyMaterial);
-			}
-		}
-
 		CameraBoom->CameraLagSpeed = WalkCameraLagSpeed;
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 		GetCharacterMovement()->RotationRate = WalkRotationRate;

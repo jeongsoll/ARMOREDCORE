@@ -156,11 +156,6 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Body;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* Leg;
 
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* LArm;
