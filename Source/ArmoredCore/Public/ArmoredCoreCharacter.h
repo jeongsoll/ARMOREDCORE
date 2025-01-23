@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerMainUI.h"
 #include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
@@ -25,6 +26,21 @@ enum class EPlayerState : uint8
 	Falling,
 	Landing,
 	AssertBoost,
+};
+
+enum class EPlayerWeapon : uint8
+{
+	Rifle,
+	Missile,
+	BeamSaber,
+};
+
+enum class EPlayerUsedWeaponPos : uint8
+{
+	LArm,
+	RArm,
+	LShoulder,
+	RShoulder,
 };
 
 UCLASS(config=Game)
@@ -122,17 +138,17 @@ public:
 	// Attack Function
 	void UpdateAttackState();
 
-	void MakeProjectile();
+	void MakeProjectile(EPlayerUsedWeaponPos weaponPos);
 	
-	void FirePressed();
+	void LArmFirePressed();
 
-	void FireReleased();
+	void LArmFireReleased();
 
 	void RotateCharacterToAimDirection();
 	
 	
 private:
-	class IPlayerMechState* CurrentState;
+	
 	
 public:
 	/** Returns CameraBoom subobject **/
@@ -158,20 +174,34 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
 
+	UPROPERTY()
+	class UPlayerMainUI* MainUI;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UPlayerMainUI> MainUIFactory;
+	
+	
 	// Enum variance
+	class IPlayerMechState* CurrentState;
+	
 	EPlayerState CurrentStateEnum;
 	
 	EPlayerState PreviousStateEnum;
 
 	// TimerHandles
+	UPROPERTY()
 	FTimerHandle QuickBoostCoolTimeHandle;
-	
+
+	UPROPERTY()
 	FTimerHandle AssertBoostLaunchHandle;
 
+	UPROPERTY()
 	FTimerHandle LArmFireTimerHandle;
 
+	UPROPERTY()
 	FTimerHandle ChangeJumpStateTimerHandle;
 
+	UPROPERTY()
 	FTimerHandle ToggleIsLandingTimerHandle;
 	
 	// BaseMove variance
@@ -186,7 +216,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float MaxHP{9080.0f};
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CurrentHP{CurrentHP = MaxHP};
 	
 	
@@ -200,6 +230,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostGauge;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
+	float MaxBoostGauge;	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostUsedTime;
@@ -234,23 +267,27 @@ public:
 	bool IsAttacking;
 	
 	FVector AimDirection;
+
+	class UWeapon* LArmWeapon;
+	class UWeapon* RArmWeapon;
+	class UWeapon* RShoulderWeapon;
+
+	
+	
 	
 	// ETC
 	float WalkCameraLagSpeed;
 	
 	UPROPERTY(EditAnywhere)
 	float BoostCameraLagSpeed;
-	
-	//UPROPERTY(EditAnywhere)
-	//float QuickBoostCameraLagSpeed;
 
 	float BaseGravity;
 	
-	UPROPERTY(EditAnywhere)
 	float FlyingGravity;
+
+	float FallingGravity;
 
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity;
-	
 };
 
