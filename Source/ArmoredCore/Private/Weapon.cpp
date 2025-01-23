@@ -9,6 +9,7 @@ UWeapon::UWeapon()
 	ReloadTime = 0;
 	MaxArmor = 0;
 	RemainArmor = 0;
+	IsReloading = false;
 }
 
 void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
@@ -17,7 +18,7 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
 	{
 		Damage = 100.0f;
 		ReloadTime = 3.0f;
-		Magazine = 300;
+		Magazine = 360;
 		RemainArmor = 12;
 		MaxArmor = 12;
 	}
@@ -32,5 +33,27 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
 	else
 	{
 		UE_LOG(LogTemp,Warning,TEXT("beam saber called"));
+	}
+}
+
+void UWeapon::Reload()
+{
+	UE_LOG(LogTemp,Warning,TEXT("Reload call"));
+	
+	if (!GetWorld()->GetTimerManager().IsTimerActive(ReloadTimerHandle) && !IsReloading)
+		GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle,this,&UWeapon::RefillArmor,ReloadTime,false);
+
+	if (!IsReloading)
+		IsReloading = true;
+}
+
+void UWeapon::RefillArmor()
+{
+	UE_LOG(LogTemp,Warning,TEXT("Refill call"));
+	if (Magazine >= MaxArmor)
+	{
+		RemainArmor = MaxArmor;
+		Magazine -= MaxArmor;
+		IsReloading = false;
 	}
 }
