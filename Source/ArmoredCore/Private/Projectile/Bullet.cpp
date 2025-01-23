@@ -22,7 +22,7 @@ ABullet::ABullet()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
-	Mesh->SetRelativeScale3D(FVector(1.0f, 0.5f, 0.5f));
+	Mesh->SetRelativeScale3D(FVector(1.0f, 0.25f, 0.25f));
 	
 	ConstructorHelpers::FObjectFinder<UStaticMesh> bulletMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 	if (bulletMesh.Succeeded())

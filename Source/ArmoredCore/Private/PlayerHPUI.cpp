@@ -10,23 +10,23 @@
 void UPlayerHPUI::NativeConstruct()
 {
 	Super::NativeConstruct();
-	maxHP = 9080;
+	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	maxHP = player->MaxHP;
+	currentHP = player->CurrentHP;
 }
 
 void UPlayerHPUI::NativeTick(const FGeometry& MyGeometry, float DeltaSeconds)
 {
 	Super::NativeTick(MyGeometry , DeltaSeconds);
-	AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-	if (player)
-	{
-		SetPlayerHPUI(player->CurrentHP);
-	}
+	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	currentHP = player->CurrentHP;
+	SetPlayerHPUI();
 }
 
-void UPlayerHPUI::SetPlayerHPUI(float playerHP)
+void UPlayerHPUI::SetPlayerHPUI()
 {
-	float per = playerHP / maxHP;
+	float per = currentHP / maxHP;
 	HPBar->SetPercent(per);
 
-	CurrentHPText->SetText(FText::AsNumber(playerHP));
+	CurrentHPText->SetText(FText::AsNumber(currentHP));
 }
