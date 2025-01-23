@@ -272,6 +272,7 @@ public:
 	class UWeapon* RArmWeapon;
 	class UWeapon* RShoulderWeapon;
 
+
 	
 	
 	

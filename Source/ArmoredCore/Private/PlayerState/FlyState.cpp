@@ -49,7 +49,7 @@ void UFlyState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaT
 		Character->IsBoostOn = true;
 		Character->BoostUsedTime = 0.0f;
 		Character->BoostGauge -= DeltaTime * 15.0f;
-		Character->AddMovementInput(Character->GetActorUpVector(),0.75,true);
+		Character->AddMovementInput(Character->GetActorUpVector(),1.0f,true);
 	}
 	else
 	{

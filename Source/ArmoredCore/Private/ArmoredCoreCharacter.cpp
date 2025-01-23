@@ -2,6 +2,7 @@
 
 #include "ArmoredCoreCharacter.h"
 
+#include "Aim.h"
 #include "AssertBoostState.h"
 #include "AsyncTreeDifferences.h"
 #include "Bullet.h"
@@ -619,6 +620,9 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 	FTransform transform;
 	if (weaponPos == EPlayerUsedWeaponPos::LArm)
 	{
+		if (!LArmWeapon->IsProjectile)
+			return;
+		
 		transform = LArmFirePos->GetComponentTransform();
 
 		if (LArmWeapon->RemainArmor <= 0)
@@ -633,15 +637,20 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 			{
 				projectile->Damage = LArmWeapon->Damage;
 				projectile->FireInDirection(AimDirection);
+				//MainUI->PlayerAim->SetArmorValue(LArmWeapon->RemainArmor,LArmWeapon->MaxArmor);
 			}
 		}
 		
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
+		if (!RArmWeapon->IsProjectile)
+			return;
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
+		if (!RShoulderWeapon->IsProjectile)
+			return;
 	}
 }
 
