@@ -130,27 +130,11 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	GetMesh()->SetRelativeLocation(FVector(0,0,-10));
 	GetMesh()->SetGenerateOverlapEvents(false);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-}
 
-void AArmoredCoreCharacter::BeginPlay()
-{
-	// Call the base class  
-	Super::BeginPlay();
 
-	// state
-	CurrentStateEnum = EPlayerState::Idle;
-	CurrentState = NewObject<UIdleState>(this);
-	CurrentState->EnterState(this);
-
-	// ui 생성
-	MainUI = CreateWidget<UPlayerMainUI>(GetWorld(),
-		MainUIFactory);
-	
-	if (MainUI)
-	{
-		MainUI->AddToViewport();
-	}
-	
+	//
+	//
+	// 변수 초기화 구간
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
 	// 이동
@@ -191,17 +175,37 @@ void AArmoredCoreCharacter::BeginPlay()
 	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
+}
 
+void AArmoredCoreCharacter::BeginPlay()
+{
+	// Call the base class  
+	Super::BeginPlay();
+
+	// state
+	CurrentStateEnum = EPlayerState::Idle;
+	CurrentState = NewObject<UIdleState>(this);
+	CurrentState->EnterState(this);
+
+	// ui 생성
+	MainUI = CreateWidget<UPlayerMainUI>(GetWorld(),
+		MainUIFactory);
+	
+	if (MainUI)
+	{
+		MainUI->AddToViewport();
+	}
+	
 	// 공격
 	IsAttacking = false;
 	LArmWeapon = NewObject<UWeapon>(this);
 	RArmWeapon = NewObject<UWeapon>(this);
 	RShoulderWeapon = NewObject<UWeapon>(this);
 
+	//무기
 	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
 	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
 	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
-	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -616,33 +620,28 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 	if (weaponPos == EPlayerUsedWeaponPos::LArm)
 	{
 		transform = LArmFirePos->GetComponentTransform();
-		ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
-		if (projectile)
+
+		if (LArmWeapon->RemainArmor <= 0)
 		{
-			if (LArmWeapon->RemainArmor <= 0)
-			{
-				if (LArmWeapon->Magazine <= 0)
-					return;
-				
-				//리로딩
-				UE_LOG(LogTemp,Warning,TEXT("Reloading Armor"));
-				LArmWeapon->Magazine -= LArmWeapon->MaxArmor;
-				LArmWeapon->RemainArmor = LArmWeapon->MaxArmor;
-			}
-			LArmWeapon->RemainArmor -= 1;
-			projectile->Damage = LArmWeapon->Damage;
-			projectile->FireInDirection(AimDirection);
-			
+			LArmWeapon->Reload();
 		}
+		else if (LArmWeapon->RemainArmor > 0)
+		{
+			LArmWeapon->RemainArmor -= 1;
+			ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+			if (projectile)
+			{
+				projectile->Damage = LArmWeapon->Damage;
+				projectile->FireInDirection(AimDirection);
+			}
+		}
+		
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
-		// 아직 미구현
-		
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
-		// 아직 미구현
 	}
 }
 
