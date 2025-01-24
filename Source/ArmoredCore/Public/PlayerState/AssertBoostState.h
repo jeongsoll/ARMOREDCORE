@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseState.h"
 #include "PlayerMechState.h"
 #include "UObject/Object.h"
 #include "AssertBoostState.generated.h"
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS()
-class ARMOREDCORE_API UAssertBoostState : public UObject, public IPlayerMechState
+class ARMOREDCORE_API UAssertBoostState : public UBaseState
 {
 	GENERATED_BODY()
 public:

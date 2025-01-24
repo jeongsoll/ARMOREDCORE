@@ -217,7 +217,8 @@ public:
 	
 	
 	// Enum variance
-	class IPlayerMechState* CurrentState;
+	UPROPERTY()
+	class UBaseState* CurrentState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly);
 	EPlayerState CurrentStateEnum;

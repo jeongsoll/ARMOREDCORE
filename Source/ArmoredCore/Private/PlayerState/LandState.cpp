@@ -30,3 +30,8 @@ void ULandState::ExitState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("ULandState::ExitState"));
 }
+
+void ULandState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
+{
+	Super::ChangeCameraOffset(Character , DeltaTime);
+}

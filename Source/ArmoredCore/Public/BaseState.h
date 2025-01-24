@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseState.h"
 #include "PlayerMechState.h"
 #include "UObject/Object.h"
-#include "JumpState.generated.h"
+#include "BaseState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ARMOREDCORE_API UJumpState : public UBaseState
+class ARMOREDCORE_API UBaseState : public UObject, public IPlayerMechState
 {
 	GENERATED_BODY()
 public:
@@ -20,5 +19,5 @@ public:
 	virtual void UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime) override;
 	virtual void ExitState(class AArmoredCoreCharacter* Character) override;
 	virtual void ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime) override;
-	
+
 };

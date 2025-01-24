@@ -21,3 +21,8 @@ void UJumpState::ExitState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UJumpState::ExitState"));
 }
+
+void UJumpState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
+{
+	Super::ChangeCameraOffset(Character , DeltaTime);
+}

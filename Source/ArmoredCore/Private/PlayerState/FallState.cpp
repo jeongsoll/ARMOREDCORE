@@ -30,3 +30,8 @@ void UFallState::ExitState(class AArmoredCoreCharacter* Character)
 	UE_LOG(LogTemp, Warning, TEXT("UFallState::ExitState"));
 	Character->GetCharacterMovement()->GravityScale = Character->BaseGravity;
 }
+
+void UFallState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
+{
+	Super::ChangeCameraOffset(Character , DeltaTime);
+}

@@ -26,3 +26,8 @@ void UIdleState::ExitState(class AArmoredCoreCharacter* Character)
 	UE_LOG(LogTemp, Warning, TEXT("UIdleState::ExitState"));
 	Character->IsMove = true;
 }
+
+void UIdleState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
+{
+	Super::ChangeCameraOffset(Character , DeltaTime);
+}
