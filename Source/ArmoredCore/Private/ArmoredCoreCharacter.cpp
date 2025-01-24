@@ -54,7 +54,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.0f;
-	GetCharacterMovement()->AirControl = 0.75f;
+	GetCharacterMovement()->AirControl = 1.0f;
 	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.0f;
@@ -93,6 +93,10 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// 변수 초기화 구간
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
+	// 체력
+	MaxHP = 9080.0f;
+	CurrentHP = MaxHP;
+	
 	// 이동
 	IsMove = false;
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
@@ -460,7 +464,7 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 	
 	if (BoostUsedTime >= 2.0f)
 	{
-		if (BoostGauge < 1000.0f &&
+		if (BoostGauge < MaxBoostGauge &&
 			!GetCharacterMovement()->IsFlying() &&
 			!GetCharacterMovement()->IsFalling())
 			IsBoostChargeStart = true;
@@ -474,11 +478,11 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 
 	if (IsBoostChargeStart)
 	{
-		if (BoostGauge < 1000.0f)
+		if (BoostGauge < MaxBoostGauge)
 			BoostGauge += GetWorld()->GetDeltaSeconds() * 20.0f;
 		else
 		{
-			BoostGauge = 1000.0f;
+			BoostGauge = MaxBoostGauge;
 			IsBoostChargeStart = false;
 		}
 	}
