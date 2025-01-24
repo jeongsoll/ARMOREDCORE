@@ -24,13 +24,13 @@ class ARMOREDCORE_API IPlayerMechState
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	// 상태가 시작될 때 호출되는 메서드
-	virtual void EnterState(class AArmoredCoreCharacter* Character);
+	virtual void EnterState(class AArmoredCoreCharacter* Character) {};
 
 	// 상태가 업데이트될 때 호출되는 메서드
-	virtual void UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime);
+	virtual void UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime) {};
 
 	// 상태가 종료될 때 호출되는 메서드
-	virtual void ExitState(class AArmoredCoreCharacter* Character);
+	virtual void ExitState(class AArmoredCoreCharacter* Character) {};
 
 	virtual void ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime);
 
