@@ -7,7 +7,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerMechState.generated.h"
 
-class AArmoredCoreCharacter;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UPlayerMechState : public UInterface

@@ -104,60 +104,84 @@ public:
 	
 	virtual void Tick(float DeltaTime) override;
 	
+	UFUNCTION()
 	void UpdatePlayerState(const EPlayerState newState);
-	
+
+	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 	
+	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 
+	UFUNCTION()
 	void OnMoveComplete();
 
 	// Jump & Fly
 	virtual void Jump() override;
 	
+	UFUNCTION()
 	void ToggleToJumpState();
 	
 	virtual void StopJumping() override;
 	
 	// Camera
+	UFUNCTION()
 	void UpdateCamera();
 	
 	// Boost Function
+	UFUNCTION()
 	void BoostOn();
 	
+	UFUNCTION()
 	void UpdateBoostGauge();
 
+	UFUNCTION()
 	void UpdateBoostState();
 	
 	// QuickBoost Function
+	UFUNCTION()
 	void QuickBoost();
 
+	UFUNCTION()
 	void ResetQuickBoostCoolTime();
 	
 	// AssertBoost Function
+	UFUNCTION()
 	void AssertBoost();
 
+	UFUNCTION()
 	void AssertBoostCancle();
 
+	UFUNCTION()
 	void StartAssertBoostLaunch();
 
 	// Attack Function
+	UFUNCTION()
 	void UpdateAttackState();
 
+	UFUNCTION()
 	void MakeProjectile(EPlayerUsedWeaponPos weaponPos);
 	
+	UFUNCTION()
 	void LArmFirePressed();
 
+	UFUNCTION()
 	void LArmFireReleased();
 	
+	UFUNCTION()
 	void RArmFirePressed();
 	
+	UFUNCTION()
 	void RArmFireReleased();
 
+	UFUNCTION()
 	void RotateCharacterToAimDirection();
+
 	
+	UFUNCTION()
 	void PlayMyMontage(UAnimMontage* montage);
 
+	UFUNCTION()
 	void OnAnimEnded(UAnimMontage* Montage,bool bInterrupted);
 
 private:
@@ -182,7 +206,6 @@ public:
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
 
 
-	UAnimInstance* AnimInstance{GetMesh()->GetAnimInstance()};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* LandMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
