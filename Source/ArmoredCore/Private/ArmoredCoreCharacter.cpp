@@ -602,6 +602,7 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 			{
 				projectile->Damage = RArmWeapon->Damage;
 				projectile->FireInDirection(AimDirection);
+				MainUI->PlayerAim->SetArmorValue(RArmWeapon->RemainArmor,RArmWeapon->MaxArmor);
 			}
 		}
 	}
