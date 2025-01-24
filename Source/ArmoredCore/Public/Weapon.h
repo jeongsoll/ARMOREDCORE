@@ -31,8 +31,11 @@ public:
 	bool IsReloading;
 	bool IsProjectile;
 
+	UFUNCTION()
 	void SetChoosenWeapon(EPlayerWeapon choosedWeapon);
+	UFUNCTION()
 	void Reload();
+	UFUNCTION()
 	void RefillArmor();
 
 	FTimerHandle ReloadTimerHandle;

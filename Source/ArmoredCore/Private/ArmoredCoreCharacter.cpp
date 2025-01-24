@@ -549,7 +549,6 @@ void AArmoredCoreCharacter::AssertBoostCancle()
 {
 	if (CurrentStateEnum == EPlayerState::AssertBoost)
 	{
-		AnimInstance->Montage_Stop(0,AssertBoostFlyMontage);
 		UpdatePlayerState(EPlayerState::Falling);
 	}
 }
@@ -603,6 +602,7 @@ void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
 			{
 				projectile->Damage = RArmWeapon->Damage;
 				projectile->FireInDirection(AimDirection);
+				MainUI->PlayerAim->SetArmorValue(RArmWeapon->RemainArmor,RArmWeapon->MaxArmor);
 			}
 		}
 	}
@@ -665,8 +665,13 @@ void AArmoredCoreCharacter::PlayMyMontage(UAnimMontage* montage)
 {
 	if (montage)
 	{
-		AnimInstance->Montage_Play(montage);
-		AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+		{
+			if (AnimInstance->Montage_IsPlaying(montage))
+				return;
+			AnimInstance->Montage_Play(montage);
+			AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
+		}
 	}
 }
 

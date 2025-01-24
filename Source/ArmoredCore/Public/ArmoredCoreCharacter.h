@@ -104,60 +104,84 @@ public:
 	
 	virtual void Tick(float DeltaTime) override;
 	
+	UFUNCTION()
 	void UpdatePlayerState(const EPlayerState newState);
-	
+
+	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 	
+	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 
+	UFUNCTION()
 	void OnMoveComplete();
 
 	// Jump & Fly
 	virtual void Jump() override;
 	
+	UFUNCTION()
 	void ToggleToJumpState();
 	
 	virtual void StopJumping() override;
 	
 	// Camera
+	UFUNCTION()
 	void UpdateCamera();
 	
 	// Boost Function
+	UFUNCTION()
 	void BoostOn();
 	
+	UFUNCTION()
 	void UpdateBoostGauge();
 
+	UFUNCTION()
 	void UpdateBoostState();
 	
 	// QuickBoost Function
+	UFUNCTION()
 	void QuickBoost();
 
+	UFUNCTION()
 	void ResetQuickBoostCoolTime();
 	
 	// AssertBoost Function
+	UFUNCTION()
 	void AssertBoost();
 
+	UFUNCTION()
 	void AssertBoostCancle();
 
+	UFUNCTION()
 	void StartAssertBoostLaunch();
 
 	// Attack Function
+	UFUNCTION()
 	void UpdateAttackState();
 
+	UFUNCTION()
 	void MakeProjectile(EPlayerUsedWeaponPos weaponPos);
 	
+	UFUNCTION()
 	void LArmFirePressed();
 
+	UFUNCTION()
 	void LArmFireReleased();
 	
+	UFUNCTION()
 	void RArmFirePressed();
 	
+	UFUNCTION()
 	void RArmFireReleased();
 
+	UFUNCTION()
 	void RotateCharacterToAimDirection();
+
 	
+	UFUNCTION()
 	void PlayMyMontage(UAnimMontage* montage);
 
+	UFUNCTION()
 	void OnAnimEnded(UAnimMontage* Montage,bool bInterrupted);
 
 private:
@@ -182,7 +206,6 @@ public:
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
 
 
-	UAnimInstance* AnimInstance{GetMesh()->GetAnimInstance()};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* LandMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
@@ -221,13 +244,16 @@ public:
 	FTimerHandle ToggleIsLandingTimerHandle;
 	
 	// BaseMove variance
+	UPROPERTY()
 	FVector2D MovementVector;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsMove;
 	
+	UPROPERTY()
 	float WalkSpeed;
-	
+
+	UPROPERTY()
 	FRotator WalkRotationRate;
 
 	UPROPERTY(EditAnywhere)
@@ -242,7 +268,8 @@ public:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boost")
 	float BoostSpeed;
-	
+
+	UPROPERTY()
 	FRotator BoostRotationRate;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
@@ -254,11 +281,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostUsedTime;
 
+	UPROPERTY()
 	bool IsBoostChargeStart;
 	
 	// QuickBoost variance
+	UPROPERTY()
 	FVector QuickBoostDir;
 	
+	UPROPERTY()
 	bool CanQuickBoost;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
@@ -271,10 +301,13 @@ public:
 	float QuickBoostCoolTime;
 
 	// AssertBoost variance
+	UPROPERTY()
 	FVector AssertBoostDir;
 	
+	UPROPERTY()
 	bool IsAssertBoostOn;
 
+	UPROPERTY()
 	bool IsAssertBoostLaunch;
 
 	// Attack variance
@@ -284,22 +317,30 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool IsAttacking;
 	
+	UPROPERTY()
 	FVector AimDirection;
 
+	UPROPERTY()
 	class UWeapon* LArmWeapon;
+	UPROPERTY()
 	class UWeapon* RArmWeapon;
+	UPROPERTY()
 	class UWeapon* RShoulderWeapon;
 	
 	// ETC
+	UPROPERTY()
 	float WalkCameraLagSpeed;
 	
 	UPROPERTY(EditAnywhere)
 	float BoostCameraLagSpeed;
-
-	float BaseGravity;
 	
+	UPROPERTY()
+	float BaseGravity;
+
+	UPROPERTY()
 	float FlyingGravity;
 
+	UPROPERTY()
 	float FallingGravity;
 
 	UPROPERTY(EditAnywhere)

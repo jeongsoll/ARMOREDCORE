@@ -36,6 +36,8 @@ class ARMOREDCORE_API UPlayerWeaponUI : public UUserWidget
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* RightArmMax;
 
+	UFUNCTION()
 	void SetRemainWeaponUI(float LB, float LA, float RB, float RA);
+	UFUNCTION()
 	void SetMaxWeaponUI(float LB, float LA, float RB, float RA);
 };
