@@ -259,9 +259,9 @@ public:
 	FRotator WalkRotationRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MaxHP{9080.0f};
+	float MaxHP;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CurrentHP{CurrentHP = MaxHP};
+	float CurrentHP;
 	
 	
 	// Boost variance
@@ -293,13 +293,13 @@ public:
 	UPROPERTY()
 	bool CanQuickBoost;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Boost")
 	bool IsQuickBoostTrigger;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="QuickBoost")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="QuickBoost")
 	float QuickBoostSpeed;
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="QuickBoost")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="QuickBoost")
 	float QuickBoostCoolTime;
 
 	// AssertBoost variance
@@ -312,7 +312,7 @@ public:
 	UPROPERTY()
 	bool IsAssertBoostLaunch;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="AssertBoost")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AssertBoost")
 	float AssertBoostSpeed;
 
 	// Attack variance
@@ -336,7 +336,7 @@ public:
 	UPROPERTY()
 	float WalkCameraLagSpeed;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	float BoostCameraLagSpeed;
 	
 	UPROPERTY()
@@ -348,7 +348,7 @@ public:
 	UPROPERTY()
 	float FallingGravity;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	float MouseSensitivity;
 };
 
