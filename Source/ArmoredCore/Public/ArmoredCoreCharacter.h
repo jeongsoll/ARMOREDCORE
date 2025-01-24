@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseCharacterClass.h"
 #include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
@@ -46,7 +47,7 @@ enum class EPlayerUsedWeaponPos : uint8
 };
 
 UCLASS(config=Game)
-class AArmoredCoreCharacter : public ACharacter
+class AArmoredCoreCharacter : public ABaseCharacterClass
 {
 	GENERATED_BODY()
 	
@@ -258,10 +259,7 @@ public:
 	UPROPERTY()
 	FRotator WalkRotationRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MaxHP;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CurrentHP;
+	
 	
 	
 	// Boost variance
