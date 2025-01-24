@@ -17,7 +17,7 @@ void UPlayerBoostGaugeUI::NativeConstruct()
 void UPlayerBoostGaugeUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry , InDeltaTime);
-	AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 
 	if (player)
 	{

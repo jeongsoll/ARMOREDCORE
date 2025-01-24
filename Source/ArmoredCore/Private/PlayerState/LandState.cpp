@@ -17,7 +17,10 @@ void ULandState::UpdateState(class AArmoredCoreCharacter* Character, float Delta
 		// 착지 연출
 
 		if (Character->MovementVector == FVector2D::ZeroVector)
+		{
+			Character->PlayMyMontage(Character->LandMontage);
 			Character->UpdatePlayerState(EPlayerState::Idle);
+		}
 		else
 			Character->UpdatePlayerState(EPlayerState::Walking);
 	}

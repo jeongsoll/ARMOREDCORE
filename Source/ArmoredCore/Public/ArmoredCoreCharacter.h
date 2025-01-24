@@ -17,6 +17,7 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+UENUM(BlueprintType)
 enum class EPlayerState : uint8
 {
 	Idle,
@@ -28,6 +29,7 @@ enum class EPlayerState : uint8
 	AssertBoost,
 };
 
+UENUM(BlueprintType)
 enum class EPlayerWeapon : uint8
 {
 	Rifle,
@@ -35,6 +37,7 @@ enum class EPlayerWeapon : uint8
 	BeamSaber,
 };
 
+UENUM(BlueprintType)
 enum class EPlayerUsedWeaponPos : uint8
 {
 	LArm,
@@ -153,7 +156,10 @@ public:
 
 	void RotateCharacterToAimDirection();
 	
-	
+	void PlayMyMontage(UAnimMontage* montage);
+
+	void OnAnimEnded(UAnimMontage* Montage,bool bInterrupted);
+
 private:
 	
 	
@@ -174,13 +180,19 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* LandMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* JumpMontage;
 	
 	
 	// Enum variance
 	class IPlayerMechState* CurrentState;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly);
 	EPlayerState CurrentStateEnum;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly);
 	EPlayerState PreviousStateEnum;
 
 	// TimerHandles
@@ -219,6 +231,7 @@ public:
 	
 	
 	// Boost variance
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boost")
 	bool IsBoostOn;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boost")
@@ -242,6 +255,7 @@ public:
 	
 	bool CanQuickBoost;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	bool IsQuickBoostTrigger;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="QuickBoost")
@@ -269,10 +283,6 @@ public:
 	class UWeapon* LArmWeapon;
 	class UWeapon* RArmWeapon;
 	class UWeapon* RShoulderWeapon;
-
-
-	
-	
 	
 	// ETC
 	float WalkCameraLagSpeed;
