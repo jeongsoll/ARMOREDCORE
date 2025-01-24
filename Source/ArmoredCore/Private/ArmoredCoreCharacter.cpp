@@ -164,6 +164,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	if (MainUI)
 	{
 		MainUI->AddToViewport();
+		MainUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 	LArmWeapon = NewObject<UWeapon>(this);
