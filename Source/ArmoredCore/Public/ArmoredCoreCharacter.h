@@ -175,7 +175,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UPlayerMainUI* MainUI;
 
 	UPROPERTY(EditAnywhere)
