@@ -45,6 +45,8 @@ void UAssertBoostState::UpdateState(class AArmoredCoreCharacter* Character, floa
 		// 순간 대쉬 후 공중이동
 		if (Character->IsAssertBoostLaunch)
 		{
+			Character->PlayMyMontage(Character->AssertBoostFlyMontage);
+
 			Character->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			Character->GetCharacterMovement()->GravityScale = Character->FlyingGravity;
 			Character->AddMovementInput(Character->AssertBoostDir,7.0f,true);

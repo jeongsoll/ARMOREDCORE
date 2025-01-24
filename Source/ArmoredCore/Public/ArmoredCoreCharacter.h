@@ -181,10 +181,16 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
 
+
+	UAnimInstance* AnimInstance{GetMesh()->GetAnimInstance()};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* LandMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* JumpMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* AssertBoostLaunchMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* AssertBoostFlyMontage;
 	
 	
 	// Enum variance

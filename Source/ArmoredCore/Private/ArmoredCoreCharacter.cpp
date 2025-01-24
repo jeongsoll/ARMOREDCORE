@@ -164,7 +164,6 @@ void AArmoredCoreCharacter::BeginPlay()
 	if (MainUI)
 	{
 		MainUI->AddToViewport();
-		MainUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 	LArmWeapon = NewObject<UWeapon>(this);
@@ -541,13 +540,18 @@ void AArmoredCoreCharacter::AssertBoost()
 
 	// 공중이동 전, 순간 대쉬를 위한 timer 코드
 	if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
+	{
 		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
+	}
 }
 
 void AArmoredCoreCharacter::AssertBoostCancle()
 {
 	if (CurrentStateEnum == EPlayerState::AssertBoost)
+	{
+		AnimInstance->Montage_Stop(0,AssertBoostFlyMontage);
 		UpdatePlayerState(EPlayerState::Falling);
+	}
 }
 
 void AArmoredCoreCharacter::StartAssertBoostLaunch()
@@ -556,6 +560,7 @@ void AArmoredCoreCharacter::StartAssertBoostLaunch()
 	{
 		IsAssertBoostLaunch = true;
 		LaunchCharacter(AssertBoostDir * 2000.0f,true,true);
+		PlayMyMontage(AssertBoostLaunchMontage);
 	}
 }
 
@@ -660,11 +665,8 @@ void AArmoredCoreCharacter::PlayMyMontage(UAnimMontage* montage)
 {
 	if (montage)
 	{
-		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-		{
-			AnimInstance->Montage_Play(montage);
-			AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
-		}
+		AnimInstance->Montage_Play(montage);
+		AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
 	}
 }
 
