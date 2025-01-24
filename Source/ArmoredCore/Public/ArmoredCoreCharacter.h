@@ -244,13 +244,16 @@ public:
 	FTimerHandle ToggleIsLandingTimerHandle;
 	
 	// BaseMove variance
+	UPROPERTY()
 	FVector2D MovementVector;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsMove;
 	
+	UPROPERTY()
 	float WalkSpeed;
-	
+
+	UPROPERTY()
 	FRotator WalkRotationRate;
 
 	UPROPERTY(EditAnywhere)
@@ -265,7 +268,8 @@ public:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boost")
 	float BoostSpeed;
-	
+
+	UPROPERTY()
 	FRotator BoostRotationRate;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
@@ -277,11 +281,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
 	float BoostUsedTime;
 
+	UPROPERTY()
 	bool IsBoostChargeStart;
 	
 	// QuickBoost variance
+	UPROPERTY()
 	FVector QuickBoostDir;
 	
+	UPROPERTY()
 	bool CanQuickBoost;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="Boost")
@@ -294,10 +301,13 @@ public:
 	float QuickBoostCoolTime;
 
 	// AssertBoost variance
+	UPROPERTY()
 	FVector AssertBoostDir;
 	
+	UPROPERTY()
 	bool IsAssertBoostOn;
 
+	UPROPERTY()
 	bool IsAssertBoostLaunch;
 
 	// Attack variance
@@ -307,22 +317,30 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool IsAttacking;
 	
+	UPROPERTY()
 	FVector AimDirection;
 
+	UPROPERTY()
 	class UWeapon* LArmWeapon;
+	UPROPERTY()
 	class UWeapon* RArmWeapon;
+	UPROPERTY()
 	class UWeapon* RShoulderWeapon;
 	
 	// ETC
+	UPROPERTY()
 	float WalkCameraLagSpeed;
 	
 	UPROPERTY(EditAnywhere)
 	float BoostCameraLagSpeed;
-
-	float BaseGravity;
 	
+	UPROPERTY()
+	float BaseGravity;
+
+	UPROPERTY()
 	float FlyingGravity;
 
+	UPROPERTY()
 	float FallingGravity;
 
 	UPROPERTY(EditAnywhere)
