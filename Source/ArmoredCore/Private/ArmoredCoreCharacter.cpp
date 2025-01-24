@@ -173,6 +173,7 @@ void AArmoredCoreCharacter::BeginPlay()
 	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
 	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
 	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
+	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -382,6 +383,7 @@ void AArmoredCoreCharacter::Jump()
 		}
 		else
 		{
+			PlayMyMontage(JumpMontage);
 			LaunchCharacter(GetActorUpVector() * 750.0f,false,true);
 		}
 
@@ -651,4 +653,21 @@ void AArmoredCoreCharacter::RotateCharacterToAimDirection()
 	FRotator YawRotation(0, ControlRotation.Yaw,0);
 	FRotator newRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(),YawRotation,GetWorld()->GetDeltaSeconds(),5.0f);
 	SetActorRotation(newRotation);
+}
+
+void AArmoredCoreCharacter::PlayMyMontage(UAnimMontage* montage)
+{
+	if (montage)
+	{
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(montage);
+			AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
+		}
+	}
+}
+
+void AArmoredCoreCharacter::OnAnimEnded(UAnimMontage* Montage,bool bInterrupted)
+{
+	GetMesh()->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
 }

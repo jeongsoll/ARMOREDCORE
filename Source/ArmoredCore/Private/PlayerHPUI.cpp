@@ -19,8 +19,11 @@ void UPlayerHPUI::NativeTick(const FGeometry& MyGeometry, float DeltaSeconds)
 {
 	Super::NativeTick(MyGeometry , DeltaSeconds);
 	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-	currentHP = player->CurrentHP;
-	SetPlayerHPUI();
+	if (player)
+	{
+		currentHP = player->CurrentHP;
+		SetPlayerHPUI();
+	}
 }
 
 void UPlayerHPUI::SetPlayerHPUI()
