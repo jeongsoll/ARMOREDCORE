@@ -60,10 +60,12 @@ void UFlyState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaT
 void UFlyState::ExitState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UFlyState::ExitState"));
+	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 void UFlyState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
+	Super::ChangeCameraOffset(Character,DeltaTime);
 	newSocket = UKismetMathLibrary::VInterpTo(Character->GetCameraBoom()->SocketOffset,FVector(-80,0,-180),GetWorld()->GetDeltaSeconds(), 2.0f);
 	Character->GetCameraBoom()->SocketOffset = newSocket;
 }

@@ -15,7 +15,8 @@ public class ArmoredCore : ModuleRules
 		{
 			"ArmoredCore/Public",
 			"ArmoredCore/Public/Projectile",
-			"ArmoredCore/Public/PlayerState"
+			"ArmoredCore/Public/PlayerState",
+			"ArmoredCore/Public/PlayerUI"
 		});
 	}
 }

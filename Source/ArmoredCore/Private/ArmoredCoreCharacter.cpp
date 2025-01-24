@@ -2,7 +2,6 @@
 
 #include "ArmoredCoreCharacter.h"
 
-#include "Aim.h"
 #include "AssertBoostState.h"
 #include "AsyncTreeDifferences.h"
 #include "Bullet.h"
@@ -29,6 +28,8 @@
 #include "BaseGizmos/GizmoElementArrow.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/UnitConversion.h"
+#include "PlayerUI/Aim.h"
+#include "PlayerUI/PlayerMainUI.h"
 #include "Rendering/RenderCommandPipes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -130,7 +131,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
-
+	AssertBoostSpeed = 7.0f;
 	
 	// 공격
 	IsAttacking = false;
@@ -536,11 +537,14 @@ void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
 
 void AArmoredCoreCharacter::AssertBoost()
 {
+	if (CurrentStateEnum == EPlayerState::AssertBoost)
+		return;
 	UpdatePlayerState(EPlayerState::AssertBoost);
 
 	// 공중이동 전, 순간 대쉬를 위한 timer 코드
 	if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
 	{
+		PlayMyMontage(AssertBoostLaunchMontage);
 		GetWorld()->GetTimerManager().SetTimer(AssertBoostLaunchHandle,this,&AArmoredCoreCharacter::StartAssertBoostLaunch,0.3f,false);
 	}
 }
@@ -559,7 +563,6 @@ void AArmoredCoreCharacter::StartAssertBoostLaunch()
 	{
 		IsAssertBoostLaunch = true;
 		LaunchCharacter(AssertBoostDir * 2000.0f,true,true);
-		PlayMyMontage(AssertBoostLaunchMontage);
 	}
 }
 
@@ -667,10 +670,11 @@ void AArmoredCoreCharacter::PlayMyMontage(UAnimMontage* montage)
 	{
 		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
 		{
-			if (AnimInstance->Montage_IsPlaying(montage))
-				return;
-			AnimInstance->Montage_Play(montage);
-			AnimInstance->OnMontageEnded.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
+			if (!AnimInstance->Montage_IsPlaying(montage))
+			{
+				AnimInstance->Montage_Play(montage);
+				AnimInstance->OnMontageBlendingOut.AddDynamic(this, &AArmoredCoreCharacter::OnAnimEnded);
+			}
 		}
 	}
 }

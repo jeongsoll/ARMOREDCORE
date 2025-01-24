@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PlayerMainUI.h"
 #include "PlayerMechState.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
@@ -117,10 +116,11 @@ public:
 	void OnMoveComplete();
 
 	// Jump & Fly
-	virtual void Jump() override;
 	
 	UFUNCTION()
 	void ToggleToJumpState();
+	
+	virtual void Jump() override;
 	
 	virtual void StopJumping() override;
 	
@@ -177,7 +177,6 @@ public:
 	UFUNCTION()
 	void RotateCharacterToAimDirection();
 
-	
 	UFUNCTION()
 	void PlayMyMontage(UAnimMontage* montage);
 
@@ -193,12 +192,14 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	// Scene Component
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* LArmFirePos;
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
 
+	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UPlayerMainUI* MainUI;
 
@@ -206,22 +207,22 @@ public:
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
 
 
+	// Animation Montage
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* LandMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* JumpMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* AssertBoostLaunchMontage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* AssertBoostFlyMontage;
 	
 	
-	// Enum variance
+	// State variance
 	UPROPERTY()
 	class UBaseState* CurrentState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly);
 	EPlayerState CurrentStateEnum;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly);
 	EPlayerState PreviousStateEnum;
 
@@ -257,7 +258,7 @@ public:
 	UPROPERTY()
 	FRotator WalkRotationRate;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxHP{9080.0f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CurrentHP{CurrentHP = MaxHP};
@@ -310,6 +311,9 @@ public:
 
 	UPROPERTY()
 	bool IsAssertBoostLaunch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,Category="AssertBoost")
+	float AssertBoostSpeed;
 
 	// Attack variance
 	UPROPERTY(EditAnywhere)

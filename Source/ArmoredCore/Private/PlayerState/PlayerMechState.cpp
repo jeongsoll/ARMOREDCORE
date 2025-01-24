@@ -9,18 +9,6 @@
 
 // Add default functionality here for any IIPlayerState functions that are not pure virtual.
 
-void IPlayerMechState::EnterState(class AArmoredCoreCharacter* Character)
-{
-}
-
-void IPlayerMechState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
-{
-}
-
-void IPlayerMechState::ExitState(class AArmoredCoreCharacter* Character)
-{
-}
-
 void IPlayerMechState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
 	if (Character->CurrentStateEnum != EPlayerState::Flying || Character->CurrentStateEnum != EPlayerState::AssertBoost)
