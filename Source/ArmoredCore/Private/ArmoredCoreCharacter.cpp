@@ -459,7 +459,7 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 	
 	if (BoostUsedTime >= 2.0f)
 	{
-		if (BoostGauge < 100.0f &&
+		if (BoostGauge < 1000.0f &&
 			!GetCharacterMovement()->IsFlying() &&
 			!GetCharacterMovement()->IsFalling())
 			IsBoostChargeStart = true;
@@ -473,11 +473,11 @@ void AArmoredCoreCharacter::UpdateBoostGauge()
 
 	if (IsBoostChargeStart)
 	{
-		if (BoostGauge < 100.0f)
+		if (BoostGauge < 1000.0f)
 			BoostGauge += GetWorld()->GetDeltaSeconds() * 20.0f;
 		else
 		{
-			BoostGauge = 100.0f;
+			BoostGauge = 1000.0f;
 			IsBoostChargeStart = false;
 		}
 	}
