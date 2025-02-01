@@ -30,3 +30,15 @@ void ABaseCharacterClass::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void ABaseCharacterClass::CharacterTakeDamage(float damage)
+{
+	CurrentHP -= damage;
+}
+
+void ABaseCharacterClass::Dead()
+{
+	// 애니메이션 진행
+	Destroy();
+}
+
+

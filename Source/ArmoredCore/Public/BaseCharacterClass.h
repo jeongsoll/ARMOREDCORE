@@ -25,6 +25,12 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION()
+	virtual void CharacterTakeDamage(float damage);
+
+	UFUNCTION()
+	virtual void Dead();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxHP;

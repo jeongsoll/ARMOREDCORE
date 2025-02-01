@@ -96,6 +96,9 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// 체력
 	MaxHP = 9080.0f;
 	CurrentHP = MaxHP;
+
+	// stagger
+	StaggerGauge = 500.0f;
 	
 	// 이동
 	IsMove = false;
