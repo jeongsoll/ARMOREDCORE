@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharacterClass.h"
-#include "PlayerMechState.h"
-#include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "ArmoredCoreCharacter.generated.h"
 
@@ -44,6 +42,13 @@ enum class EPlayerUsedWeaponPos : uint8
 	RArm,
 	LShoulder,
 	RShoulder,
+};
+
+UENUM(BlueprintType)
+enum class EProjectileType : uint8
+{
+	Bullet,
+	Missile,
 };
 
 UCLASS(config=Game)
@@ -92,8 +97,10 @@ class AArmoredCoreCharacter : public ABaseCharacterClass
 	UInputAction* LArmFireAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* RArmFireAction;	
+	UInputAction* RArmFireAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RShoulderFireAction;
 
 public:
 	AArmoredCoreCharacter();
@@ -117,7 +124,6 @@ public:
 	void OnMoveComplete();
 
 	// Jump & Fly
-	
 	UFUNCTION()
 	void ToggleToJumpState();
 	
@@ -161,7 +167,13 @@ public:
 	void UpdateAttackState();
 
 	UFUNCTION()
-	void MakeProjectile(EPlayerUsedWeaponPos weaponPos);
+	class AProjectile* MakeProjectile(EProjectileType projectileType, FTransform transform);
+
+	UFUNCTION()
+	void FireWeapon(EPlayerUsedWeaponPos weaponPos);
+
+	UFUNCTION()
+	void FireWithAmmoCheck(UWeapon* weapon, FTransform transform);
 	
 	UFUNCTION()
 	void LArmFirePressed();
@@ -174,6 +186,12 @@ public:
 	
 	UFUNCTION()
 	void RArmFireReleased();
+
+	UFUNCTION()
+	void RShoulderFirePressed();
+
+	UFUNCTION()
+	void RShoulderFireReleased();
 
 	UFUNCTION()
 	void RotateCharacterToAimDirection();
@@ -199,6 +217,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USceneComponent* RArmFirePos;
+
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* RShoulderFirePos;
 
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -239,6 +260,9 @@ public:
 
 	UPROPERTY()
 	FTimerHandle RArmFireTimerHandle;
+
+	UPROPERTY()
+	FTimerHandle RShoulderFireTimerHandle;
 
 	UPROPERTY()
 	FTimerHandle ChangeJumpStateTimerHandle;
@@ -316,6 +340,9 @@ public:
 	// Attack variance
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ABullet> BulletFactory;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMissile> MissileFactory;
 	
 	UPROPERTY(EditAnywhere)
 	bool IsAttacking;

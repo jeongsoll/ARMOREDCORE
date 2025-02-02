@@ -23,8 +23,8 @@ void UAim::NativeConstruct()
 			RArmProgBar->SetBrushFromMaterial(RArmProgBarMatInst);
 		}
 	}
-	CurrentArmor = 1;
-	MaxArmor = 1;
+	CurrentAmmo = 1;
+	MaxAmmo = 1;
 }
 
 void UAim::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -36,12 +36,12 @@ void UAim::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UAim::SetProgBar()
 {
 
-	float per = CurrentArmor / MaxArmor * 0.25f;
+	float per = CurrentAmmo / MaxAmmo * 0.25f;
 	RArmProgBarMatInst->SetScalarParameterValue(FName("Percentage"), per);
 }
 
-void UAim::SetArmorValue(float currentArmor, float maxArmor)
+void UAim::SetAmmoValue(float currentAmmo, float maxAmmo)
 {
-	CurrentArmor = currentArmor;
-	MaxArmor = maxArmor;
+	CurrentAmmo = currentAmmo;
+	MaxAmmo = maxAmmo;
 }

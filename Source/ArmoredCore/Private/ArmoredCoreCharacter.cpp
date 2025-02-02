@@ -3,9 +3,7 @@
 #include "ArmoredCoreCharacter.h"
 
 #include "AssertBoostState.h"
-#include "AsyncTreeDifferences.h"
 #include "Bullet.h"
-#include "EasingFunction.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,21 +14,17 @@
 #include "EnhancedInputSubsystems.h"
 #include "FallState.h"
 #include "FlyState.h"
-#include "FrameTypes.h"
 #include "IdleState.h"
 #include "InputActionValue.h"
-#include "InteractiveToolManager.h"
 #include "JumpState.h"
 #include "LandState.h"
-#include "MovieSceneTracksComponentTypes.h"
+#include "Missile.h"
 #include "WalkState.h"
+#include "Projectile.h"
 #include "Weapon.h"
-#include "BaseGizmos/GizmoElementArrow.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Math/UnitConversion.h"
 #include "PlayerUI/Aim.h"
 #include "PlayerUI/PlayerMainUI.h"
-#include "Rendering/RenderCommandPipes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -80,9 +74,11 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 
 	LArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("LArmFirePos"));
 	RArmFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RArmFirePos"));
+	RShoulderFirePos = CreateDefaultSubobject<USceneComponent>(TEXT("RShoulderFirePos"));
 
 	LArmFirePos->SetupAttachment(GetMesh());
 	RArmFirePos->SetupAttachment(GetMesh());
+	RShoulderFirePos->SetupAttachment(GetMesh());
 
 	GetMesh()->SetGenerateOverlapEvents(false);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
@@ -225,6 +221,10 @@ void AArmoredCoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// RArmFire
 		EnhancedInputComponent->BindAction(RArmFireAction, ETriggerEvent::Started, this, &AArmoredCoreCharacter::RArmFirePressed);
 		EnhancedInputComponent->BindAction(RArmFireAction, ETriggerEvent::Completed, this, &AArmoredCoreCharacter::RArmFireReleased);
+		
+		// RShoulderFire
+		EnhancedInputComponent->BindAction(RShoulderFireAction,ETriggerEvent::Started, this, &AArmoredCoreCharacter::RShoulderFirePressed);
+		EnhancedInputComponent->BindAction(RShoulderFireAction,ETriggerEvent::Completed, this, &AArmoredCoreCharacter::RShoulderFireReleased);
 	}
 	
 	else
@@ -584,44 +584,81 @@ void AArmoredCoreCharacter::UpdateAttackState()
 	}
 }
 
-void AArmoredCoreCharacter::MakeProjectile(EPlayerUsedWeaponPos weaponPos)
+AProjectile* AArmoredCoreCharacter::MakeProjectile(EProjectileType projectileType, FTransform transform)
 {
-	FTransform transform;
+	
+	if (projectileType == EProjectileType::Bullet)
+	{
+		ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
+		return projectile;
+	}
+	else if (projectileType == EProjectileType::Missile)
+	{
+		AMissile* projectile = GetWorld()->SpawnActor<AMissile>(MissileFactory,transform);
+		return projectile;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+
+void AArmoredCoreCharacter::FireWeapon(EPlayerUsedWeaponPos weaponPos)
+{
 	if (weaponPos == EPlayerUsedWeaponPos::LArm)
 	{
-		if (!LArmWeapon->IsProjectile)
-			return;
+		FireWithAmmoCheck(LArmWeapon,LArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
-		if (!RArmWeapon->IsProjectile)
-			return;
-
-		transform = RArmFirePos->GetComponentTransform();
-		
-
-		if (RArmWeapon->RemainArmor <= 0)
-		{
-			RArmWeapon->Reload();
-		}
-		else if (RArmWeapon->RemainArmor > 0)
-		{
-			RArmWeapon->RemainArmor -= 1;
-			ABullet* projectile = GetWorld()->SpawnActor<ABullet>(BulletFactory,transform);
-			if (projectile)
-			{
-				projectile->Damage = RArmWeapon->Damage;
-				projectile->FireInDirection(AimDirection);
-				MainUI->PlayerAim->SetArmorValue(RArmWeapon->RemainArmor,RArmWeapon->MaxArmor);
-			}
-		}
+		FireWithAmmoCheck(RArmWeapon,RArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
-		if (!RShoulderWeapon->IsProjectile)
-			return;
+		FireWithAmmoCheck(RShoulderWeapon,RShoulderFirePos->GetComponentTransform());
 	}
 }
+
+void AArmoredCoreCharacter::FireWithAmmoCheck(UWeapon* weapon, FTransform transform)
+{
+	if (!weapon->IsProjectile)
+		return;
+
+	if (weapon->RemainAmmo <= 0)
+	{
+		weapon->Reload();
+	}
+	else if (weapon->RemainAmmo > 0)
+	{
+		if (weapon->ProjectileType == EProjectileType::Bullet)
+		{
+			weapon->RemainAmmo -= 1;
+			auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
+			if (projectile)
+			{
+				projectile->Damage = weapon->Damage;
+				projectile->FireInDirection(AimDirection);
+				MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
+			}
+		}
+		else if (weapon->ProjectileType == EProjectileType::Missile)
+		{
+			weapon->RemainAmmo -= 4;
+			for (int i = 0; i < 4; i++)
+			{
+				auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
+				if (projectile)
+				{
+					projectile->Damage = weapon->Damage;
+					projectile->FireInDirection(AimDirection);
+				}
+			}
+			MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
+		}
+	}
+}
+
 
 void AArmoredCoreCharacter::LArmFirePressed()
 {
@@ -648,7 +685,7 @@ void AArmoredCoreCharacter::RArmFirePressed()
 	IsAttacking = true;
 	if (!GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
 	{
-		GetWorld()->GetTimerManager().SetTimer(RArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::RArm);},0.3f,true);
+		GetWorld()->GetTimerManager().SetTimer(RArmFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RArm);},0.3f,true);
 	}
 }
 
@@ -661,6 +698,27 @@ void AArmoredCoreCharacter::RArmFireReleased()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(RArmFireTimerHandle);
 	}
+}
+
+void AArmoredCoreCharacter::RShoulderFirePressed()
+{
+	IsAttacking = true;
+	if (!GetWorld()->GetTimerManager().IsTimerActive(RShoulderFireTimerHandle))
+	{
+		GetWorld()->GetTimerManager().SetTimer(RShoulderFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RShoulder);},0.3f,true);
+	}
+}
+
+void AArmoredCoreCharacter::RShoulderFireReleased()
+{
+	IsAttacking = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(RShoulderFireTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(RShoulderFireTimerHandle);
+	}
+
 }
 
 void AArmoredCoreCharacter::RotateCharacterToAimDirection()

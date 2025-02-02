@@ -35,9 +35,9 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	void SetProgBar();
 	UFUNCTION()
-	void SetArmorValue(float currentArmor, float maxArmor);
+	void SetAmmoValue(float currentAmmo, float maxAmmo);
 	UPROPERTY()
-	float CurrentArmor;
+	float CurrentAmmo;
 	UPROPERTY()
-	float MaxArmor;
+	float MaxAmmo;
 };
