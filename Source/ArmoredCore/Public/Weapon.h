@@ -20,12 +20,14 @@ public:
 	UWeapon();
 
 	UFUNCTION()
-	void SetChoosenWeapon(EPlayerWeapon choosedWeapon);
+	void SetChoosenWeapon(EPlayerWeapon choosedWeapon, EPlayerUsedWeaponPos weaponPos);
 	UFUNCTION()
 	void Reload();
 	UFUNCTION()
 	void RefillAmmo();
 
+	UPROPERTY()
+	EPlayerUsedWeaponPos WeaponPos;
 	UPROPERTY()
 	EProjectileType ProjectileType;
 	UPROPERTY(EditAnywhere)

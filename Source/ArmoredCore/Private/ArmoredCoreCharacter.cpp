@@ -16,12 +16,15 @@
 #include "FlyState.h"
 #include "IdleState.h"
 #include "InputActionValue.h"
+#include "JS_Boss.h"
 #include "JumpState.h"
 #include "LandState.h"
+#include "LockAim.h"
 #include "Missile.h"
 #include "WalkState.h"
 #include "Projectile.h"
 #include "Weapon.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerUI/Aim.h"
 #include "PlayerUI/PlayerMainUI.h"
@@ -168,15 +171,16 @@ void AArmoredCoreCharacter::BeginPlay()
 	if (MainUI)
 	{
 		MainUI->AddToViewport();
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 	LArmWeapon = NewObject<UWeapon>(this);
 	RArmWeapon = NewObject<UWeapon>(this);
 	RShoulderWeapon = NewObject<UWeapon>(this);
 
-	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
-	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
-	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
+	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber, EPlayerUsedWeaponPos::LArm);
+	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle, EPlayerUsedWeaponPos::RArm);
+	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile, EPlayerUsedWeaponPos::RShoulder);
 	
 }
 
@@ -252,6 +256,12 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	UpdateBoostGauge();
 	// 공격 함수
 	UpdateAttackState();
+
+	AJS_Boss* boss = Cast<AJS_Boss>(UGameplayStatics::GetActorOfClass(GetWorld(), AJS_Boss::StaticClass()));
+	if (boss)
+	{
+		Test(boss);
+	}
 }
 
 void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState NewState)
@@ -451,6 +461,35 @@ void AArmoredCoreCharacter::UpdateCamera()
 	FollowCamera->SetRelativeRotation(newRotator);
 }
 
+void AArmoredCoreCharacter::Test(AActor* TargetActor)
+{
+	if (!FollowCamera || !TargetActor)
+		return;
+
+	FVector CameraLocation = FollowCamera->GetComponentLocation();
+	FVector CameraForward = FollowCamera->GetForwardVector();
+	
+	FVector TargetLocation = TargetActor->GetActorLocation();
+
+	FVector ToTarget = (TargetLocation - CameraLocation).GetSafeNormal();
+
+	float DotProduct = FVector::DotProduct(CameraForward, ToTarget);
+	float Angle = FMath::Acos(DotProduct) * (180.f / PI); // 라디안 -> 도
+
+	float CameraFOV = FollowCamera->FieldOfView;
+
+	if (Angle < (CameraFOV / 2))
+	{
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Visible);
+		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Hidden);
+	}
+	else
+	{
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
+		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
 
 void AArmoredCoreCharacter::BoostOn()
 {
@@ -608,19 +647,19 @@ void AArmoredCoreCharacter::FireWeapon(EPlayerUsedWeaponPos weaponPos)
 {
 	if (weaponPos == EPlayerUsedWeaponPos::LArm)
 	{
-		FireWithAmmoCheck(LArmWeapon,LArmFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, LArmWeapon,LArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
-		FireWithAmmoCheck(RArmWeapon,RArmFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, RArmWeapon,RArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
-		FireWithAmmoCheck(RShoulderWeapon,RShoulderFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, RShoulderWeapon,RShoulderFirePos->GetComponentTransform());
 	}
 }
 
-void AArmoredCoreCharacter::FireWithAmmoCheck(UWeapon* weapon, FTransform transform)
+void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UWeapon* weapon, FTransform transform)
 {
 	if (!weapon->IsProjectile)
 		return;
@@ -639,22 +678,23 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(UWeapon* weapon, FTransform transf
 			{
 				projectile->Damage = weapon->Damage;
 				projectile->FireInDirection(AimDirection);
-				MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
 			}
+			MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 		}
 		else if (weapon->ProjectileType == EProjectileType::Missile)
 		{
 			weapon->RemainAmmo -= 4;
 			for (int i = 0; i < 4; i++)
 			{
+				transform.SetLocation(FVector3d(transform.GetLocation().X, transform.GetLocation().Y + 30*i, transform.GetLocation().Z));
 				auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
 				if (projectile)
 				{
 					projectile->Damage = weapon->Damage;
 					projectile->FireInDirection(AimDirection);
 				}
+				MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 			}
-			MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
 		}
 	}
 }

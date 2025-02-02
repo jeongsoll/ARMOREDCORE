@@ -134,6 +134,9 @@ public:
 	// Camera
 	UFUNCTION()
 	void UpdateCamera();
+
+	UFUNCTION()
+	void Test(AActor* TargetActor);
 	
 	// Boost Function
 	UFUNCTION()
@@ -173,7 +176,7 @@ public:
 	void FireWeapon(EPlayerUsedWeaponPos weaponPos);
 
 	UFUNCTION()
-	void FireWithAmmoCheck(UWeapon* weapon, FTransform transform);
+	void FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UWeapon* weapon, FTransform transform);
 	
 	UFUNCTION()
 	void LArmFirePressed();
