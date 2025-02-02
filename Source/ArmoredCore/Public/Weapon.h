@@ -7,9 +7,11 @@
 #include "UObject/Object.h"
 #include "Weapon.generated.h"
 
+
 /**
  * 
  */
+
 UCLASS()
 class ARMOREDCORE_API UWeapon : public UObject
 {
@@ -17,6 +19,15 @@ class ARMOREDCORE_API UWeapon : public UObject
 public:
 	UWeapon();
 
+	UFUNCTION()
+	void SetChoosenWeapon(EPlayerWeapon choosedWeapon);
+	UFUNCTION()
+	void Reload();
+	UFUNCTION()
+	void RefillAmmo();
+
+	UPROPERTY()
+	EProjectileType ProjectileType;
 	UPROPERTY(EditAnywhere)
 	float Damage;
 	UPROPERTY(EditAnywhere)
@@ -24,20 +35,16 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 Magazine;
 	UPROPERTY(EditAnywhere)
-	int32 MaxArmor;
+	int32 MaxAmmo;
 	UPROPERTY(EditAnywhere)
-	int32 RemainArmor;
+	int32 RemainAmmo;
 	
+	UPROPERTY()
 	bool IsReloading;
+	UPROPERTY()
 	bool IsProjectile;
 
-	UFUNCTION()
-	void SetChoosenWeapon(EPlayerWeapon choosedWeapon);
-	UFUNCTION()
-	void Reload();
-	UFUNCTION()
-	void RefillArmor();
-
+	UPROPERTY()
 	FTimerHandle ReloadTimerHandle;
 
 };

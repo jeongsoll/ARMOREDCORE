@@ -1,16 +1,16 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Bullet.h"
+#include "Missile.h"
 
 #include "Components/BoxComponent.h"
 
 // Sets default values
-ABullet::ABullet()
+AMissile::AMissile()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	Root->SetBoxExtent(FVector(32.0f, 16.0f, 16.0f));
 	Mesh->SetRelativeScale3D(FVector(1.0f, 0.25f, 0.25f));
 	
@@ -26,20 +26,18 @@ ABullet::ABullet()
 		Mesh->SetMaterial(0, bulletMaterial.Object);
 	}
 	
-	Root->SetCollisionProfileName(TEXT("Bullet"));
+	Root->SetCollisionProfileName(TEXT("Missile"));
 }
 
 // Called when the game starts or when spawned
-void ABullet::BeginPlay()
+void AMissile::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
 // Called every frame
-void ABullet::Tick(float DeltaTime)
+void AMissile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-
-
 

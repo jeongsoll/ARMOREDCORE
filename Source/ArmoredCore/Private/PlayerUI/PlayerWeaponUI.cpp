@@ -18,7 +18,7 @@ void UPlayerWeaponUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 	if (player)
 	{
-		SetRemainWeaponUI(NULL,player->LArmWeapon->RemainArmor,player->RShoulderWeapon->RemainArmor,player->RArmWeapon->RemainArmor);
+		SetRemainWeaponUI(NULL,player->LArmWeapon->RemainAmmo,player->RShoulderWeapon->RemainAmmo,player->RArmWeapon->RemainAmmo);
 		SetMaxWeaponUI(NULL,player->LArmWeapon->Magazine,player->RShoulderWeapon->Magazine,player->RArmWeapon->Magazine);
 	}
 }
