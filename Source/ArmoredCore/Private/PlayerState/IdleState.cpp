@@ -12,6 +12,7 @@ void UIdleState::EnterState(class AArmoredCoreCharacter* Character)
 	UE_LOG(LogTemp, Warning, TEXT("UIdleState::EnterState"));
 	Character->IsMove = false;
 	Character->IsBoostOn = false;
+
 }
 
 void UIdleState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)

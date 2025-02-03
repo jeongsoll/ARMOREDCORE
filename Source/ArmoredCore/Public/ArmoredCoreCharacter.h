@@ -217,6 +217,12 @@ public:
 	UFUNCTION()
 	void GameClear();
 
+	UFUNCTION()
+	void PlayLoopingSound(class USoundBase* sound);
+
+	UFUNCTION()
+	void StopLoopingSound(class USoundBase* sound);
+
 private:
 	
 	
@@ -243,7 +249,38 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
 
-	
+	// Sound
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* QuickBoostSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* AssertBoostSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* LandingSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* NoBoostGaugeSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* FlyingSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* RifleSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* MissileSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* BoostOnSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* WalkingSound;
+
+	UPROPERTY()
+	class UAudioComponent* AudioComponent;
+
+
 
 
 	// Animation Montage

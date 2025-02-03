@@ -4,10 +4,12 @@
 #include "LandState.h"
 
 #include "ArmoredCoreCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 void ULandState::EnterState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("ULandState::EnterState"));
+	UGameplayStatics::PlaySound2D(Character,Character->LandingSound);
 }
 
 void ULandState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
