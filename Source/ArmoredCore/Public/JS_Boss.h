@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseCharacterClass.h"
 #include "GameFramework/Character.h"
 #include "JS_Boss.generated.h"
 
 UCLASS()
-class ARMOREDCORE_API AJS_Boss : public ACharacter
+class ARMOREDCORE_API AJS_Boss : public ABaseCharacterClass
 {
 	GENERATED_BODY()
 
@@ -25,5 +26,5 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 };
