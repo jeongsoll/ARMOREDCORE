@@ -25,7 +25,7 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon, EPlayerUsedWeaponPos
 	{
 		IsProjectile = true;
 		ProjectileType = EProjectileType::Bullet;
-		Damage = 100.0f;
+		Damage = 10000.0f;
 		ReloadTime = 3.0f;
 		Magazine = 360;
 		RemainAmmo = 12;
