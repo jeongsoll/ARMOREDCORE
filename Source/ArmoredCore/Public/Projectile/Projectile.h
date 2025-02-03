@@ -24,7 +24,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void FireInDirection(const FVector& ShootDirection);
 	
 	UFUNCTION()
