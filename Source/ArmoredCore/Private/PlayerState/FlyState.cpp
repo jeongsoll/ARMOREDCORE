@@ -66,7 +66,7 @@ void UFlyState::ExitState(class AArmoredCoreCharacter* Character)
 void UFlyState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
 	Super::ChangeCameraOffset(Character,DeltaTime);
-	newSocket = UKismetMathLibrary::VInterpTo(Character->GetCameraBoom()->SocketOffset,FVector(-80,0,-180),GetWorld()->GetDeltaSeconds(), 2.0f);
+	newSocket = UKismetMathLibrary::VInterpTo(Character->GetCameraBoom()->SocketOffset,FVector(-80,0,-180),DeltaTime, 2.0f);
 	Character->GetCameraBoom()->SocketOffset = newSocket;
 }
 

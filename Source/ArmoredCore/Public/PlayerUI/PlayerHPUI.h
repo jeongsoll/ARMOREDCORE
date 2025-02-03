@@ -13,8 +13,6 @@ UCLASS()
 class ARMOREDCORE_API UPlayerHPUI : public UUserWidget
 {
 	GENERATED_BODY()
-	float maxHP;
-	float currentHP;
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry & MyGeometry, float DeltaSeconds) override;
@@ -27,5 +25,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* CurrentHPText;
-	
+
+	UPROPERTY()
+	float maxHP;
+	UPROPERTY()
+	float currentHP;
 };

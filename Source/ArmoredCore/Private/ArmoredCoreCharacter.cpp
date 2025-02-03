@@ -16,12 +16,15 @@
 #include "FlyState.h"
 #include "IdleState.h"
 #include "InputActionValue.h"
+#include "JS_Boss.h"
 #include "JumpState.h"
 #include "LandState.h"
+#include "LockAim.h"
 #include "Missile.h"
 #include "WalkState.h"
 #include "Projectile.h"
 #include "Weapon.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerUI/Aim.h"
 #include "PlayerUI/PlayerMainUI.h"
@@ -58,7 +61,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetRelativeLocation(FVector(-60.0f, 0.0f, 120.0f));
+	CameraBoom->SetRelativeLocation(OriginCamLocation);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->bEnableCameraLag = true;
@@ -168,15 +171,16 @@ void AArmoredCoreCharacter::BeginPlay()
 	if (MainUI)
 	{
 		MainUI->AddToViewport();
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 	LArmWeapon = NewObject<UWeapon>(this);
 	RArmWeapon = NewObject<UWeapon>(this);
 	RShoulderWeapon = NewObject<UWeapon>(this);
 
-	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber);
-	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle);
-	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile);
+	LArmWeapon->SetChoosenWeapon(EPlayerWeapon::BeamSaber, EPlayerUsedWeaponPos::LArm);
+	RArmWeapon->SetChoosenWeapon(EPlayerWeapon::Rifle, EPlayerUsedWeaponPos::RArm);
+	RShoulderWeapon->SetChoosenWeapon(EPlayerWeapon::Missile, EPlayerUsedWeaponPos::RShoulder);
 	
 }
 
@@ -252,6 +256,12 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	UpdateBoostGauge();
 	// 공격 함수
 	UpdateAttackState();
+
+	Boss = Cast<AJS_Boss>(UGameplayStatics::GetActorOfClass(GetWorld(), AJS_Boss::StaticClass()));
+	if (Boss)
+	{
+		DetectBoss(Boss);
+	}
 }
 
 void AArmoredCoreCharacter::UpdatePlayerState(EPlayerState NewState)
@@ -418,6 +428,8 @@ void AArmoredCoreCharacter::UpdateCamera()
 	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
 	FRotator newRotator;
 
+	CheckForObstacles();
+
 	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
 	if (CanQuickBoost)
 	{
@@ -451,6 +463,82 @@ void AArmoredCoreCharacter::UpdateCamera()
 	FollowCamera->SetRelativeRotation(newRotator);
 }
 
+void AArmoredCoreCharacter::DetectBoss(AJS_Boss* TargetActor)
+{
+	if (!FollowCamera || !TargetActor)
+		return;
+
+	FVector CameraLocation = FollowCamera->GetComponentLocation();
+	
+	FVector TargetLocation = TargetActor->GetCapsuleComponent()->GetComponentLocation();
+	FVector CameraToTarget = TargetLocation - CameraLocation;
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	int32 ScreenWidth, ScreenHeight;
+	PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
+
+	FVector2d ScreenLocation;
+	UGameplayStatics::ProjectWorldToScreen(PlayerController,TargetLocation,ScreenLocation);
+
+	float DistanceToEnemy = FVector::Distance(TargetLocation, GetActorLocation());
+	if ((ScreenLocation.X >= 0 && ScreenLocation.X <= ScreenWidth) &&
+		   (ScreenLocation.Y >= 0 && ScreenLocation.Y <= ScreenHeight) && DistanceToEnemy <= 10000.0f)
+	{
+		IsDetected = true;
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Visible);
+		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Hidden);
+		//y좌표 오차 조정
+		TargetLocation += CameraToTarget * 15.0f;
+		UGameplayStatics::ProjectWorldToScreen(PlayerController,TargetLocation,ScreenLocation);
+		ScreenLocation.X -= (ScreenLocation.X * 1.0f);
+		ScreenLocation.Y -= (ScreenLocation.Y * 2.25f);
+		MainUI->PlayerLockAim->SetRenderTranslation(ScreenLocation);
+		
+	}
+	else
+	{
+		IsDetected = false;
+		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
+		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Visible);
+		CameraBoom->SocketOffset = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,OriginCamOffset,GetWorld()->GetDeltaSeconds(),5.0f);
+	}
+}
+
+void AArmoredCoreCharacter::CheckForObstacles()
+{
+	FVector CameraLocation = FollowCamera->GetComponentLocation();
+	FVector PlayerLocation = GetActorLocation() + FVector(0, 0, 50);
+
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
+	TraceParams.bReturnPhysicalMaterial = false;
+	TraceParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+	   HitResult,
+	   CameraLocation,
+	   PlayerLocation,
+	   ECC_Visibility, // 충돌 채널
+	   TraceParams
+   );
+	if (bHit)
+	{
+		float DesiredArmLength = FVector::Dist(CameraLocation, HitResult.Location) - 50.0f;
+		DesiredArmLength = FMath::Clamp(DesiredArmLength, 100.0f, 300.0f);
+		float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength, DesiredArmLength, GetWorld()->GetDeltaSeconds(), 180.0f);
+		CameraBoom->TargetArmLength = CamArmLength;
+	}
+	else
+	{
+		if (CurrentStateEnum != EPlayerState::Flying || CurrentStateEnum != EPlayerState::AssertBoost)
+		{
+			GetCameraBoom()->SocketOffset = UKismetMathLibrary::VInterpTo(GetCameraBoom()->SocketOffset,OriginCamOffset,GetWorld()->GetDeltaSeconds(), 5.0f);;
+		}
+
+		float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength,300.0f,GetWorld()->GetDeltaSeconds(),180.0f);
+		CameraBoom->TargetArmLength = CamArmLength;
+	}
+}
 
 void AArmoredCoreCharacter::BoostOn()
 {
@@ -608,19 +696,19 @@ void AArmoredCoreCharacter::FireWeapon(EPlayerUsedWeaponPos weaponPos)
 {
 	if (weaponPos == EPlayerUsedWeaponPos::LArm)
 	{
-		FireWithAmmoCheck(LArmWeapon,LArmFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, LArmWeapon,LArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RArm)
 	{
-		FireWithAmmoCheck(RArmWeapon,RArmFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, RArmWeapon,RArmFirePos->GetComponentTransform());
 	}
 	else if (weaponPos == EPlayerUsedWeaponPos::RShoulder)
 	{
-		FireWithAmmoCheck(RShoulderWeapon,RShoulderFirePos->GetComponentTransform());
+		FireWithAmmoCheck(weaponPos, RShoulderWeapon,RShoulderFirePos->GetComponentTransform());
 	}
 }
 
-void AArmoredCoreCharacter::FireWithAmmoCheck(UWeapon* weapon, FTransform transform)
+void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UWeapon* weapon, FTransform transform)
 {
 	if (!weapon->IsProjectile)
 		return;
@@ -638,46 +726,54 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(UWeapon* weapon, FTransform transf
 			if (projectile)
 			{
 				projectile->Damage = weapon->Damage;
-				projectile->FireInDirection(AimDirection);
-				MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
+				if (IsDetected)
+				{
+					FVector dir = (Boss->GetActorLocation() - transform.GetLocation());
+					dir.Normalize();
+					projectile->FireInDirection(dir);
+				}
+				else
+				{
+					projectile->FireInDirection(AimDirection);
+				}
 			}
+			MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 		}
 		else if (weapon->ProjectileType == EProjectileType::Missile)
 		{
 			weapon->RemainAmmo -= 4;
 			for (int i = 0; i < 4; i++)
 			{
+				transform.SetLocation(FVector3d(transform.GetLocation().X, transform.GetLocation().Y + 30*i, transform.GetLocation().Z));
 				auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
 				if (projectile)
 				{
 					projectile->Damage = weapon->Damage;
-					projectile->FireInDirection(AimDirection);
+					if (IsDetected)
+					{
+						FVector dir = (Boss->GetActorLocation() - transform.GetLocation());
+						dir.Normalize();
+						projectile->FireInDirection(dir);
+					}
+					else
+					{
+						projectile->FireInDirection(AimDirection);
+					}
 				}
+				MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 			}
-			MainUI->PlayerAim->SetAmmoValue(weapon->RemainAmmo,weapon->MaxAmmo);
 		}
 	}
 }
 
-
 void AArmoredCoreCharacter::LArmFirePressed()
 {
-	// IsAttacking = true;
-	// if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-	// {
-	// 	GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::LArm);},0.3f,true);
-	// }
+
 }
 
 void AArmoredCoreCharacter::LArmFireReleased()
 {
-	// IsAttacking = false;
-	// GetCharacterMovement()->bOrientRotationToMovement = true;
-	//
-	// if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-	// {
-	// 	GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
-	// }
+
 }
 
 void AArmoredCoreCharacter::RArmFirePressed()

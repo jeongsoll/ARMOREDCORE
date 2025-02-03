@@ -3,6 +3,9 @@
 
 #include "Bullet.h"
 
+#include "ArmoredCoreCharacter.h"
+#include "JS_Boss.h"
+#include "PlayerMainUI.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -12,7 +15,7 @@ ABullet::ABullet()
 	PrimaryActorTick.bCanEverTick = true;
 
 	Root->SetBoxExtent(FVector(32.0f, 16.0f, 16.0f));
-	Mesh->SetRelativeScale3D(FVector(1.0f, 0.25f, 0.25f));
+	Root->SetCollisionProfileName(TEXT("Bullet"));
 	
 	ConstructorHelpers::FObjectFinder<UStaticMesh> bulletMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 	if (bulletMesh.Succeeded())
@@ -26,7 +29,6 @@ ABullet::ABullet()
 		Mesh->SetMaterial(0, bulletMaterial.Object);
 	}
 	
-	Root->SetCollisionProfileName(TEXT("Bullet"));
 }
 
 // Called when the game starts or when spawned
@@ -39,6 +41,27 @@ void ABullet::BeginPlay()
 void ABullet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ABullet::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Super::OnMyBeginOverlap(OverlappedComponent , OtherActor , OtherComp , OtherBodyIndex , bFromSweep , SweepResult);
+
+	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
+	if (player)
+	{
+		player->CharacterTakeDamage(Damage);
+		if (player->CurrentHP <= 0)
+			player->Dead();
+		Destroy();
+	}
+
+	auto* boss = Cast<AJS_Boss>(OtherActor);
+	if (boss)
+	{
+		
+	}
 }
 
 

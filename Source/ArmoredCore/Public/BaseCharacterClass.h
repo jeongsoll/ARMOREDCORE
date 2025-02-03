@@ -26,11 +26,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void CharacterTakeDamage(float damage);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void Dead();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DieMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxHP;

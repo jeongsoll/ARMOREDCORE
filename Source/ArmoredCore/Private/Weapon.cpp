@@ -17,8 +17,9 @@ UWeapon::UWeapon()
 	IsProjectile = false;
 }
 
-void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon)
+void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon, EPlayerUsedWeaponPos weaponPos)
 {
+	WeaponPos = weaponPos;
 	if (choosedWeapon == EPlayerWeapon::Rifle)
 	{
 		IsProjectile = true;
@@ -67,6 +68,6 @@ void UWeapon::RefillAmmo()
 		IsReloading = false;
 		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
 		AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-		player->MainUI->PlayerAim->SetAmmoValue(RemainAmmo,MaxAmmo);
+		player->MainUI->PlayerAim->SetAmmoValue(WeaponPos,RemainAmmo,MaxAmmo);
 	}
 }
