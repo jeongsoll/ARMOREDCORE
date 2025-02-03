@@ -40,7 +40,7 @@ void ABaseCharacterClass::CharacterTakeDamage(float damage)
 void ABaseCharacterClass::Dead()
 {
 	// 애니메이션 진행
-	Destroy();
+	this->SetHidden(true);
 }
 
 

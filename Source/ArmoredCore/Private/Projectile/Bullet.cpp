@@ -55,12 +55,22 @@ void ABullet::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		if (player->CurrentHP <= 0)
 			player->Dead();
 		Destroy();
+		return;
 	}
 
 	auto* boss = Cast<AJS_Boss>(OtherActor);
 	if (boss)
 	{
+		UE_LOG(LogTemp,Warning,TEXT("Boss hit bullet"));
+		boss->CharacterTakeDamage(Damage);
+		if (boss->CurrentHP <= 0)
+			boss->Dead();
+		Destroy();
 		
+	}
+	else
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Boss call failed"));
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "Weapon.h"
 
 #include "Aim.h"
+#include "LockAim.h"
 #include "PlayerMainUI.h"
 
 
@@ -24,7 +25,7 @@ void UWeapon::SetChoosenWeapon(EPlayerWeapon choosedWeapon, EPlayerUsedWeaponPos
 	{
 		IsProjectile = true;
 		ProjectileType = EProjectileType::Bullet;
-		Damage = 100.0f;
+		Damage = 10000.0f;
 		ReloadTime = 3.0f;
 		Magazine = 360;
 		RemainAmmo = 12;
@@ -69,5 +70,6 @@ void UWeapon::RefillAmmo()
 		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
 		AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 		player->MainUI->PlayerAim->SetAmmoValue(WeaponPos,RemainAmmo,MaxAmmo);
+		player->MainUI->PlayerLockAim->SetAmmoValue(WeaponPos,RemainAmmo,MaxAmmo);
 	}
 }

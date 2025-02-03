@@ -3,6 +3,7 @@
 
 #include "Missile.h"
 
+#include "ArmoredCoreCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
@@ -30,4 +31,27 @@ void AMissile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+void AMissile::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult)
+{
+	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
+	if (player)
+	{
+		player->CharacterTakeDamage(Damage);
+		if (player->CurrentHP <= 0)
+			player->Dead();
+		Destroy();
+		return;
+	}
+
+	auto* boss = Cast<AJS_Boss>(OtherActor);
+	if (boss)
+	{
+		boss->CharacterTakeDamage(Damage);
+		if (boss->CurrentHP <= 0)
+			boss->Dead();
+		Destroy();
+	}
+}
+
 
