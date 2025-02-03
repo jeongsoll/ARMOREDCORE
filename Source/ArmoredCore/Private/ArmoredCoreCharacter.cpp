@@ -14,6 +14,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "FallState.h"
 #include "FlyState.h"
+#include "GameClear.h"
+#include "GameOver.h"
 #include "IdleState.h"
 #include "InputActionValue.h"
 #include "JS_Boss.h"
@@ -93,7 +95,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
 	// 체력
-	MaxHP = 9080.0f;
+	MaxHP = 1000.0f;
 	CurrentHP = MaxHP;
 
 	// stagger
@@ -172,6 +174,8 @@ void AArmoredCoreCharacter::BeginPlay()
 	{
 		MainUI->AddToViewport();
 		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
+		MainUI->PlayerGameOver->SetVisibility(ESlateVisibility::Hidden);
+		MainUI->PlayerGameClear->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 	LArmWeapon = NewObject<UWeapon>(this);
@@ -245,9 +249,6 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	{
 		CurrentState->UpdateState(this, DeltaTime);
 	}
-
-	// TODO
-	// 부스트 관련 함수들 전부 이동시키기
 
 	// 부스트의 카메라 연출 함수
 	UpdateCamera();
@@ -849,4 +850,45 @@ void AArmoredCoreCharacter::PlayMyMontage(UAnimMontage* montage)
 void AArmoredCoreCharacter::OnAnimEnded(UAnimMontage* Montage,bool bInterrupted)
 {
 	GetMesh()->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+}
+
+void AArmoredCoreCharacter::Dead()
+{
+	Super::Dead();
+	UE_LOG(LogTemp,Warning,TEXT("AArmoredCoreCharacter::Dead"));
+	PlayMyMontage(DieMontage);
+	GetWorld()->GetTimerManager().SetTimer(GameOverTimerHandle,this,&AArmoredCoreCharacter::GameOver,1.0f,false);
+}
+
+void AArmoredCoreCharacter::GameOver()
+{
+	SetActorHiddenInGame(true);
+	MainUI->PlayerGameOver->SetVisibility(ESlateVisibility::Visible);
+	MainUI->PlayerGameOver->PlayMyAnimation();
+
+	GetWorld()->GetFirstPlayerController()->SetIgnoreMoveInput(true);
+	GetWorld()->GetFirstPlayerController()->SetIgnoreLookInput(true);
+
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(MainUI->PlayerGameOver->TakeWidget());
+	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+}
+
+void AArmoredCoreCharacter::GameClear()
+{
+	MainUI->PlayerGameClear->SetVisibility(ESlateVisibility::Visible);
+	MainUI->PlayerGameClear->PlayMyAnimation();
+
+	SetActorHiddenInGame(true);
+	
+	GetWorld()->GetFirstPlayerController()->SetIgnoreMoveInput(true);
+	GetWorld()->GetFirstPlayerController()->SetIgnoreLookInput(true);
+
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(MainUI->PlayerGameClear->TakeWidget());
+	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 }
