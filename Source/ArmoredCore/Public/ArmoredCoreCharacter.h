@@ -141,9 +141,6 @@ public:
 
 	UFUNCTION()
 	void CheckForObstacles();
-
-	UFUNCTION()
-	void AdjustCameraPosition(float DistanceToObstacle);
 	
 	// Boost Function
 	UFUNCTION()
@@ -378,6 +375,7 @@ public:
 
 	UPROPERTY()
 	FVector OriginCamOffset{FVector(0,0,0)};
+	
 	UPROPERTY()
 	float WalkCameraLagSpeed;
 	

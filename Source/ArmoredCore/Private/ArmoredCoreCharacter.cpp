@@ -504,7 +504,6 @@ void AArmoredCoreCharacter::DetectBoss(AJS_Boss* TargetActor)
 	}
 }
 
-
 void AArmoredCoreCharacter::CheckForObstacles()
 {
 	FVector CameraLocation = FollowCamera->GetComponentLocation();
@@ -767,25 +766,14 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 	}
 }
 
-
 void AArmoredCoreCharacter::LArmFirePressed()
 {
-	// IsAttacking = true;
-	// if (!GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-	// {
-	// 	GetWorld()->GetTimerManager().SetTimer(LArmFireTimerHandle,[this](){this->MakeProjectile(EPlayerUsedWeaponPos::LArm);},0.3f,true);
-	// }
+
 }
 
 void AArmoredCoreCharacter::LArmFireReleased()
 {
-	// IsAttacking = false;
-	// GetCharacterMovement()->bOrientRotationToMovement = true;
-	//
-	// if (GetWorld()->GetTimerManager().IsTimerActive(LArmFireTimerHandle))
-	// {
-	// 	GetWorld()->GetTimerManager().ClearTimer(LArmFireTimerHandle);
-	// }
+
 }
 
 void AArmoredCoreCharacter::RArmFirePressed()
