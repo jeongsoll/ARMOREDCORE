@@ -10,9 +10,6 @@
 void UPlayerHPUI::NativeConstruct()
 {
 	Super::NativeConstruct();
-	auto* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-	maxHP = player->MaxHP;
-	currentHP = player->CurrentHP;
 }
 
 void UPlayerHPUI::NativeTick(const FGeometry& MyGeometry, float DeltaSeconds)
@@ -22,6 +19,7 @@ void UPlayerHPUI::NativeTick(const FGeometry& MyGeometry, float DeltaSeconds)
 	if (player)
 	{
 		currentHP = player->CurrentHP;
+		maxHP = player->MaxHP;
 		SetPlayerHPUI();
 	}
 }

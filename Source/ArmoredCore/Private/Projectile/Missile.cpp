@@ -4,6 +4,7 @@
 #include "Missile.h"
 
 #include "Components/BoxComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
 AMissile::AMissile()
@@ -12,21 +13,10 @@ AMissile::AMissile()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	Root->SetBoxExtent(FVector(32.0f, 16.0f, 16.0f));
-	Mesh->SetRelativeScale3D(FVector(1.0f, 0.25f, 0.25f));
-	
-	ConstructorHelpers::FObjectFinder<UStaticMesh> bulletMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
-	if (bulletMesh.Succeeded())
-	{
-		Mesh->SetStaticMesh(bulletMesh.Object);
-	}
-	
-	ConstructorHelpers::FObjectFinder<UMaterial> bulletMaterial(TEXT("/Script/Engine.Material'/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial'"));
-	if (bulletMaterial.Succeeded())
-	{
-		Mesh->SetMaterial(0, bulletMaterial.Object);
-	}
-	
 	Root->SetCollisionProfileName(TEXT("Missile"));
+
+	ProjectileMovementComponent->bShouldBounce = false;
+	ProjectileMovementComponent->InitialSpeed = 1500.0f;
 }
 
 // Called when the game starts or when spawned

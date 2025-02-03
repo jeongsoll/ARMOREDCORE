@@ -31,6 +31,9 @@ public:
 
 	UFUNCTION()
 	virtual void Dead();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DieMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxHP;

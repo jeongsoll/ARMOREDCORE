@@ -55,17 +55,4 @@ void AProjectile::FireInDirection(const FVector& ShootDirection)
 void AProjectile::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	auto* boss = Cast<AJS_Boss>(OtherActor);
-	if (boss)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("Boss hit"));
-		Destroy();
-	}
-	
-	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
-    	if (player)
-    	{
-    		UE_LOG(LogTemp,Warning,TEXT("Player hit"));
-    		Destroy();
-    	}
 }

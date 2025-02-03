@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharacterClass.h"
+#include "JS_Boss.h"
 #include "Logging/LogMacros.h"
 #include "ArmoredCoreCharacter.generated.h"
 
@@ -134,6 +135,15 @@ public:
 	// Camera
 	UFUNCTION()
 	void UpdateCamera();
+
+	UFUNCTION()
+	void DetectBoss(AJS_Boss* TargetActor);
+
+	UFUNCTION()
+	void CheckForObstacles();
+
+	UFUNCTION()
+	void AdjustCameraPosition(float DistanceToObstacle);
 	
 	// Boost Function
 	UFUNCTION()
@@ -173,7 +183,7 @@ public:
 	void FireWeapon(EPlayerUsedWeaponPos weaponPos);
 
 	UFUNCTION()
-	void FireWithAmmoCheck(UWeapon* weapon, FTransform transform);
+	void FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UWeapon* weapon, FTransform transform);
 	
 	UFUNCTION()
 	void LArmFirePressed();
@@ -227,6 +237,8 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerMainUI> MainUIFactory;
+
+	
 
 
 	// Animation Montage
@@ -283,9 +295,6 @@ public:
 	UPROPERTY()
 	FRotator WalkRotationRate;
 
-	
-	
-	
 	// Boost variance
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boost")
 	bool IsBoostOn;
@@ -346,6 +355,9 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	bool IsAttacking;
+
+	UPROPERTY()
+	bool IsDetected;
 	
 	UPROPERTY()
 	FVector AimDirection;
@@ -358,6 +370,14 @@ public:
 	class UWeapon* RShoulderWeapon;
 	
 	// ETC
+	UPROPERTY()
+	AJS_Boss* Boss;
+	
+	UPROPERTY()
+	FVector OriginCamLocation{FVector(-60.0f,0,60.0f)};
+
+	UPROPERTY()
+	FVector OriginCamOffset{FVector(0,0,0)};
 	UPROPERTY()
 	float WalkCameraLagSpeed;
 	

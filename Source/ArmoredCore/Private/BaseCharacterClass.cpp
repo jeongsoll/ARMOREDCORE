@@ -3,6 +3,9 @@
 
 #include "BaseCharacterClass.h"
 
+#include "LockAim.h"
+#include "Blueprint/UserWidget.h"
+
 
 // Sets default values
 ABaseCharacterClass::ABaseCharacterClass()
@@ -15,7 +18,6 @@ ABaseCharacterClass::ABaseCharacterClass()
 void ABaseCharacterClass::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame

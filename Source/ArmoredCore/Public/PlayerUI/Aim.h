@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Aim.generated.h"
 
+enum class EPlayerUsedWeaponPos : uint8;
 /**
  * 
  */
@@ -14,6 +15,12 @@ class ARMOREDCORE_API UAim : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual void SetProgBar();
+	UFUNCTION()
+	void SetAmmoValue(EPlayerUsedWeaponPos weaponPos, float currentAmmo, float maxAmmo);
+	
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	class UImage* LShoulderProgBar;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
@@ -29,15 +36,13 @@ public:
 	class UMaterialInstanceDynamic* RArmProgBarMatInst;
 	UPROPERTY()
 	class UMaterialInstanceDynamic* RShoulderProgBarMatInst;
-
-
-	virtual void NativeConstruct() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	void SetProgBar();
-	UFUNCTION()
-	void SetAmmoValue(float currentAmmo, float maxAmmo);
+	
 	UPROPERTY()
-	float CurrentAmmo;
+	float RACurrentAmmo{1.0f};
 	UPROPERTY()
-	float MaxAmmo;
+	float RAMaxAmmo{1.0f};
+	UPROPERTY()
+	float RBCurrentAmmo{1.0f};
+	UPROPERTY()
+	float RBMaxAmmo{1.0f};
 };
