@@ -9,11 +9,13 @@
 void UWalkState::EnterState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UWalkState::EnterState"));
+	Character->PlayLoopingSound(Character->WalkingSound);
 }
 
 void UWalkState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
 {
 	ChangeCameraOffset(Character,DeltaTime);
+	
 	if (Character->MovementVector == FVector2D::ZeroVector)
 	{
 		Character->IsMove = false;

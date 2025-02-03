@@ -26,6 +26,7 @@
 #include "WalkState.h"
 #include "Projectile.h"
 #include "Weapon.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerUI/Aim.h"
@@ -95,7 +96,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 3500;
 
 	// 체력
-	MaxHP = 1000.0f;
+	MaxHP = 10000.0f;
 	CurrentHP = MaxHP;
 
 	// stagger
@@ -541,7 +542,12 @@ void AArmoredCoreCharacter::CheckForObstacles()
 void AArmoredCoreCharacter::BoostOn()
 {
 	if (IsMove)
+	{
 		IsBoostOn = true;
+		StopLoopingSound(WalkingSound);
+		PlayLoopingSound(BoostOnSound);
+	}
+	
 }
 
 void AArmoredCoreCharacter::UpdateBoostGauge()
@@ -603,6 +609,7 @@ void AArmoredCoreCharacter::QuickBoost()
 
 		if (IsMove && BoostGauge > 0)
 		{
+			UGameplayStatics::PlaySound2D(this,QuickBoostSound);
 			IsBoostOn = true;
 			BoostGauge -= 10.0f;
 			FVector newVelocity = QuickBoostSpeed * QuickBoostDir;
@@ -634,7 +641,7 @@ void AArmoredCoreCharacter::AssertBoost()
 	if (CurrentStateEnum == EPlayerState::AssertBoost)
 		return;
 	UpdatePlayerState(EPlayerState::AssertBoost);
-
+	PlayLoopingSound(AssertBoostSound);
 	// 공중이동 전, 순간 대쉬를 위한 timer 코드
 	if(!GetWorld()->GetTimerManager().IsTimerActive(ToggleIsLandingTimerHandle))
 	{
@@ -648,6 +655,7 @@ void AArmoredCoreCharacter::AssertBoostCancle()
 	if (CurrentStateEnum == EPlayerState::AssertBoost)
 	{
 		UpdatePlayerState(EPlayerState::Falling);
+		StopLoopingSound(AssertBoostSound);
 	}
 }
 
@@ -789,6 +797,7 @@ void AArmoredCoreCharacter::RArmFirePressed()
 	if (!GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().SetTimer(RArmFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RArm);},0.3f,true);
+		PlayLoopingSound(RifleSound);
 	}
 }
 
@@ -800,6 +809,7 @@ void AArmoredCoreCharacter::RArmFireReleased()
 	if (GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(RArmFireTimerHandle);
+		StopLoopingSound(RifleSound);
 	}
 }
 
@@ -809,6 +819,7 @@ void AArmoredCoreCharacter::RShoulderFirePressed()
 	if (!GetWorld()->GetTimerManager().IsTimerActive(RShoulderFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().SetTimer(RShoulderFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RShoulder);},0.3f,true);
+		PlayLoopingSound(MissileSound);
 	}
 }
 
@@ -891,4 +902,26 @@ void AArmoredCoreCharacter::GameClear()
 	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+}
+
+void AArmoredCoreCharacter::PlayLoopingSound(class USoundBase* sound)
+{
+	if (sound)
+	{
+		AudioComponent = UGameplayStatics::SpawnSoundAttached(sound, GetRootComponent());
+		if (AudioComponent)
+		{
+			if (!AudioComponent->IsPlaying())
+				AudioComponent->Play();
+		}
+	}
+}
+
+void AArmoredCoreCharacter::StopLoopingSound(class USoundBase* sound)
+{
+	if (sound)
+	{
+		if (AudioComponent->IsPlaying())
+			AudioComponent->Stop();
+	}
 }

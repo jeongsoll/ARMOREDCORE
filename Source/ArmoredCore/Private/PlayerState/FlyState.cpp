@@ -17,6 +17,7 @@ void UFlyState::EnterState(class AArmoredCoreCharacter* Character)
 	{
 		Character->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Character->GetCharacterMovement()->GravityScale = Character->FlyingGravity;
+		Character->PlayLoopingSound(Character->FlyingSound);
 	}
 	else
 	{
@@ -61,6 +62,7 @@ void UFlyState::ExitState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UFlyState::ExitState"));
 	Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+	Character->StopLoopingSound(Character->FlyingSound);
 }
 
 void UFlyState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
