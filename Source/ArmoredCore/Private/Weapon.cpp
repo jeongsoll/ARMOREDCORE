@@ -4,6 +4,7 @@
 #include "Weapon.h"
 
 #include "Aim.h"
+#include "LockAim.h"
 #include "PlayerMainUI.h"
 
 
@@ -69,5 +70,6 @@ void UWeapon::RefillAmmo()
 		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle);
 		AArmoredCoreCharacter* player = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 		player->MainUI->PlayerAim->SetAmmoValue(WeaponPos,RemainAmmo,MaxAmmo);
+		player->MainUI->PlayerLockAim->SetAmmoValue(WeaponPos,RemainAmmo,MaxAmmo);
 	}
 }

@@ -467,12 +467,8 @@ void AArmoredCoreCharacter::DetectBoss(AJS_Boss* TargetActor)
 {
 	if (!FollowCamera || !TargetActor)
 		return;
-
-	FVector CameraLocation = FollowCamera->GetComponentLocation();
 	
 	FVector TargetLocation = TargetActor->GetCapsuleComponent()->GetComponentLocation();
-	FVector CameraToTarget = TargetLocation - CameraLocation;
-
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	int32 ScreenWidth, ScreenHeight;
 	PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
@@ -487,11 +483,12 @@ void AArmoredCoreCharacter::DetectBoss(AJS_Boss* TargetActor)
 		IsDetected = true;
 		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Visible);
 		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Hidden);
-		//y좌표 오차 조정
-		TargetLocation += CameraToTarget * 15.0f;
-		UGameplayStatics::ProjectWorldToScreen(PlayerController,TargetLocation,ScreenLocation);
-		ScreenLocation.X -= (ScreenLocation.X * 1.0f);
-		ScreenLocation.Y -= (ScreenLocation.Y * 2.25f);
+
+		MainUI->PlayerLockAim->SetHPValue(Boss->CurrentHP,Boss->MaxHP);
+
+		// 좌표 오차 수정
+		ScreenLocation.X -= (ScreenLocation.X * 0.75f);
+		ScreenLocation.Y -= (ScreenLocation.Y * 1.75f);
 		MainUI->PlayerLockAim->SetRenderTranslation(ScreenLocation);
 		
 	}
@@ -627,6 +624,7 @@ void AArmoredCoreCharacter::QuickBoost()
 void AArmoredCoreCharacter::ResetQuickBoostCoolTime()
 {
 	GetCharacterMovement()->GravityScale = BaseGravity;
+	IsQuickBoostTrigger = false;
 	CanQuickBoost = true;
 }
 
@@ -712,16 +710,17 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 {
 	if (!weapon->IsProjectile)
 		return;
-
-	if (weapon->RemainAmmo <= 0)
-	{
-		weapon->Reload();
-	}
-	else if (weapon->RemainAmmo > 0)
+	
+	if (weapon->RemainAmmo > 0)
 	{
 		if (weapon->ProjectileType == EProjectileType::Bullet)
 		{
 			weapon->RemainAmmo -= 1;
+			if (weapon->RemainAmmo <= 0)
+			{
+				weapon->Reload();
+			}
+			
 			auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
 			if (projectile)
 			{
@@ -738,10 +737,16 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 				}
 			}
 			MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
+			MainUI->PlayerLockAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 		}
 		else if (weapon->ProjectileType == EProjectileType::Missile)
 		{
 			weapon->RemainAmmo -= 4;
+			if (weapon->RemainAmmo <= 0)
+			{
+				weapon->Reload();
+			}
+			
 			for (int i = 0; i < 4; i++)
 			{
 				transform.SetLocation(FVector3d(transform.GetLocation().X, transform.GetLocation().Y + 30*i, transform.GetLocation().Z));
@@ -761,6 +766,7 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 					}
 				}
 				MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
+				MainUI->PlayerLockAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 			}
 		}
 	}
