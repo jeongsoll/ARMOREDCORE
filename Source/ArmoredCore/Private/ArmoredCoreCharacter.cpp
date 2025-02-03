@@ -61,7 +61,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetRelativeLocation(FVector(-60.0f, 0.0f, 120.0f));
+	CameraBoom->SetRelativeLocation(OriginCamLocation);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->bEnableCameraLag = true;
@@ -257,10 +257,10 @@ void AArmoredCoreCharacter::Tick(float DeltaTime)
 	// 공격 함수
 	UpdateAttackState();
 
-	AJS_Boss* boss = Cast<AJS_Boss>(UGameplayStatics::GetActorOfClass(GetWorld(), AJS_Boss::StaticClass()));
-	if (boss)
+	Boss = Cast<AJS_Boss>(UGameplayStatics::GetActorOfClass(GetWorld(), AJS_Boss::StaticClass()));
+	if (Boss)
 	{
-		Test(boss);
+		DetectBoss(Boss);
 	}
 }
 
@@ -428,6 +428,8 @@ void AArmoredCoreCharacter::UpdateCamera()
 	FRotator lerpRotator = FRotator(-MovementVector.Y, 0, MovementVector.X);
 	FRotator newRotator;
 
+	CheckForObstacles();
+
 	// 퀵부스트 사용가능 시(퀵부스트 사용안한상태), 부스트 이동상태에 따른 회전값 설정
 	if (CanQuickBoost)
 	{
@@ -461,35 +463,83 @@ void AArmoredCoreCharacter::UpdateCamera()
 	FollowCamera->SetRelativeRotation(newRotator);
 }
 
-void AArmoredCoreCharacter::Test(AActor* TargetActor)
+void AArmoredCoreCharacter::DetectBoss(AJS_Boss* TargetActor)
 {
 	if (!FollowCamera || !TargetActor)
 		return;
 
 	FVector CameraLocation = FollowCamera->GetComponentLocation();
-	FVector CameraForward = FollowCamera->GetForwardVector();
 	
-	FVector TargetLocation = TargetActor->GetActorLocation();
+	FVector TargetLocation = TargetActor->GetCapsuleComponent()->GetComponentLocation();
+	FVector CameraToTarget = TargetLocation - CameraLocation;
 
-	FVector ToTarget = (TargetLocation - CameraLocation).GetSafeNormal();
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	int32 ScreenWidth, ScreenHeight;
+	PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
 
-	float DotProduct = FVector::DotProduct(CameraForward, ToTarget);
-	float Angle = FMath::Acos(DotProduct) * (180.f / PI); // 라디안 -> 도
+	FVector2d ScreenLocation;
+	UGameplayStatics::ProjectWorldToScreen(PlayerController,TargetLocation,ScreenLocation);
 
-	float CameraFOV = FollowCamera->FieldOfView;
-
-	if (Angle < (CameraFOV / 2))
+	float DistanceToEnemy = FVector::Distance(TargetLocation, GetActorLocation());
+	if ((ScreenLocation.X >= 0 && ScreenLocation.X <= ScreenWidth) &&
+		   (ScreenLocation.Y >= 0 && ScreenLocation.Y <= ScreenHeight) && DistanceToEnemy <= 10000.0f)
 	{
+		IsDetected = true;
 		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Visible);
 		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Hidden);
+		//y좌표 오차 조정
+		TargetLocation += CameraToTarget * 15.0f;
+		UGameplayStatics::ProjectWorldToScreen(PlayerController,TargetLocation,ScreenLocation);
+		ScreenLocation.X -= (ScreenLocation.X * 1.0f);
+		ScreenLocation.Y -= (ScreenLocation.Y * 2.25f);
+		MainUI->PlayerLockAim->SetRenderTranslation(ScreenLocation);
+		
 	}
 	else
 	{
+		IsDetected = false;
 		MainUI->PlayerLockAim->SetVisibility(ESlateVisibility::Hidden);
 		MainUI->PlayerAim->SetVisibility(ESlateVisibility::Visible);
+		CameraBoom->SocketOffset = UKismetMathLibrary::VInterpTo(CameraBoom->SocketOffset,OriginCamOffset,GetWorld()->GetDeltaSeconds(),5.0f);
 	}
 }
 
+
+void AArmoredCoreCharacter::CheckForObstacles()
+{
+	FVector CameraLocation = FollowCamera->GetComponentLocation();
+	FVector PlayerLocation = GetActorLocation() + FVector(0, 0, 50);
+
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
+	TraceParams.bReturnPhysicalMaterial = false;
+	TraceParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+	   HitResult,
+	   CameraLocation,
+	   PlayerLocation,
+	   ECC_Visibility, // 충돌 채널
+	   TraceParams
+   );
+	if (bHit)
+	{
+		float DesiredArmLength = FVector::Dist(CameraLocation, HitResult.Location) - 50.0f;
+		DesiredArmLength = FMath::Clamp(DesiredArmLength, 100.0f, 300.0f);
+		float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength, DesiredArmLength, GetWorld()->GetDeltaSeconds(), 180.0f);
+		CameraBoom->TargetArmLength = CamArmLength;
+	}
+	else
+	{
+		if (CurrentStateEnum != EPlayerState::Flying || CurrentStateEnum != EPlayerState::AssertBoost)
+		{
+			GetCameraBoom()->SocketOffset = UKismetMathLibrary::VInterpTo(GetCameraBoom()->SocketOffset,OriginCamOffset,GetWorld()->GetDeltaSeconds(), 5.0f);;
+		}
+
+		float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength,300.0f,GetWorld()->GetDeltaSeconds(),180.0f);
+		CameraBoom->TargetArmLength = CamArmLength;
+	}
+}
 
 void AArmoredCoreCharacter::BoostOn()
 {
@@ -677,7 +727,16 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 			if (projectile)
 			{
 				projectile->Damage = weapon->Damage;
-				projectile->FireInDirection(AimDirection);
+				if (IsDetected)
+				{
+					FVector dir = (Boss->GetActorLocation() - transform.GetLocation());
+					dir.Normalize();
+					projectile->FireInDirection(dir);
+				}
+				else
+				{
+					projectile->FireInDirection(AimDirection);
+				}
 			}
 			MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 		}
@@ -691,7 +750,16 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 				if (projectile)
 				{
 					projectile->Damage = weapon->Damage;
-					projectile->FireInDirection(AimDirection);
+					if (IsDetected)
+					{
+						FVector dir = (Boss->GetActorLocation() - transform.GetLocation());
+						dir.Normalize();
+						projectile->FireInDirection(dir);
+					}
+					else
+					{
+						projectile->FireInDirection(AimDirection);
+					}
 				}
 				MainUI->PlayerAim->SetAmmoValue(weaponPos,weapon->RemainAmmo,weapon->MaxAmmo);
 			}

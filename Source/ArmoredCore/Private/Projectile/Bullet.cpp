@@ -4,6 +4,7 @@
 #include "Bullet.h"
 
 #include "ArmoredCoreCharacter.h"
+#include "JS_Boss.h"
 #include "PlayerMainUI.h"
 #include "Components/BoxComponent.h"
 
@@ -50,9 +51,16 @@ void ABullet::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
 	if (player)
 	{
-		player->CurrentHP -= Damage;
+		player->CharacterTakeDamage(Damage);
 		if (player->CurrentHP <= 0)
 			player->Dead();
+		Destroy();
+	}
+
+	auto* boss = Cast<AJS_Boss>(OtherActor);
+	if (boss)
+	{
+		
 	}
 }
 
