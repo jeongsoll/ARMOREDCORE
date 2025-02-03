@@ -209,6 +209,14 @@ public:
 	UFUNCTION()
 	void OnAnimEnded(UAnimMontage* Montage,bool bInterrupted);
 
+	virtual void Dead() override;
+
+	UFUNCTION()
+	void GameOver();
+
+	UFUNCTION()
+	void GameClear();
+
 private:
 	
 	
@@ -258,6 +266,9 @@ public:
 	EPlayerState PreviousStateEnum;
 
 	// TimerHandles
+	UPROPERTY()
+	FTimerHandle GameOverTimerHandle;
+	
 	UPROPERTY()
 	FTimerHandle QuickBoostCoolTimeHandle;
 

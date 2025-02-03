@@ -40,7 +40,8 @@ void ABaseCharacterClass::CharacterTakeDamage(float damage)
 void ABaseCharacterClass::Dead()
 {
 	// 애니메이션 진행
-	this->SetHidden(true);
+	UE_LOG(LogTemp,Warning,TEXT("ABaseCharacterClass::Dead"));
+	IsDead = true;
 }
 
 

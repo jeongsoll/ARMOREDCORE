@@ -3,6 +3,8 @@
 
 #include "JS_Boss.h"
 
+#include "ArmoredCoreCharacter.h"
+
 // Sets default values
 AJS_Boss::AJS_Boss()
 {
@@ -15,7 +17,7 @@ AJS_Boss::AJS_Boss()
 void AJS_Boss::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	PlayerCharacter = Cast<AArmoredCoreCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 // Called every frame
@@ -30,4 +32,11 @@ void AJS_Boss::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AJS_Boss::Dead()
+{
+	Super::Dead();
+	if (PlayerCharacter)
+		PlayerCharacter->GameClear();
 }

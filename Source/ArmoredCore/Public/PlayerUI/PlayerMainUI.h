@@ -28,5 +28,10 @@ public:
 
 	UPROPERTY(meta=(BindWidget))
 	class ULockAim* PlayerLockAim;
-	
+
+	UPROPERTY(meta=(BindWidget))
+	class UGameClear* PlayerGameClear;
+
+	UPROPERTY(meta=(BindWidget))
+	class UGameOver* PlayerGameOver;
 };

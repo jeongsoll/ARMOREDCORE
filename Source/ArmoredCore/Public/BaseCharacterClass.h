@@ -31,6 +31,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void Dead();
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* DieMontage;
@@ -41,5 +42,7 @@ public:
 	float CurrentHP;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float StaggerGauge;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsDead{false};
 	
 };
