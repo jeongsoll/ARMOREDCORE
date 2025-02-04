@@ -9,7 +9,8 @@
 void UWalkState::EnterState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UWalkState::EnterState"));
-	Character->PlayLoopingSound(Character->WalkingSound);
+	if (Character->IsMove)
+		Character->PlayLoopingSound(Character->WalkingSound);
 }
 
 void UWalkState::UpdateState(class AArmoredCoreCharacter* Character, float DeltaTime)
@@ -26,6 +27,7 @@ void UWalkState::UpdateState(class AArmoredCoreCharacter* Character, float Delta
 void UWalkState::ExitState(class AArmoredCoreCharacter* Character)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UWalkState::ExitState"));
+	Character->StopLoopingSound(Character->WalkingSound);
 }
 
 void UWalkState::ChangeCameraOffset(class AArmoredCoreCharacter* Character, float DeltaTime)
