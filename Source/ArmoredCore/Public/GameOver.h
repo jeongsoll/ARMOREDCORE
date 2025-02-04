@@ -30,7 +30,5 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_Title;
-	UPROPERTY(meta = (BindWidget))
-	class UButton* btn_Retry;
 	
 };

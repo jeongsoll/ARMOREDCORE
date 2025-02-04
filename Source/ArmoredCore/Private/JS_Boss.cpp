@@ -38,5 +38,11 @@ void AJS_Boss::Dead()
 {
 	Super::Dead();
 	if (PlayerCharacter)
+	{
 		PlayerCharacter->GameClear();
+		PlayerCharacter->CurrentHP = 99999.0f;
+	}
+
+	SetActorHiddenInGame(true);
+		
 }

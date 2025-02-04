@@ -21,5 +21,8 @@ public:
 	
 	UPROPERTY(meta = (BindWidgetAnim), Transient, BlueprintReadWrite)
 	class UWidgetAnimation* MissionComplete;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* btn_Title;
 	
 };
