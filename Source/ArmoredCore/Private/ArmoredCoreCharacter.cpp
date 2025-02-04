@@ -140,7 +140,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
-	AssertBoostSpeed = 15.0f;
+	AssertBoostSpeed = 100.0f;
 	
 	// 공격
 	IsAttacking = false;
@@ -880,6 +880,10 @@ void AArmoredCoreCharacter::GameOver()
 	MainUI->PlayerGameOver->SetVisibility(ESlateVisibility::Visible);
 	MainUI->PlayerGameOver->PlayMyAnimation();
 
+	GetWorld()->GetTimerManager().ClearTimer(RArmFireTimerHandle);
+	StopLoopingSound(RifleSound);
+	
+
 	GetWorld()->GetFirstPlayerController()->SetIgnoreMoveInput(true);
 	GetWorld()->GetFirstPlayerController()->SetIgnoreLookInput(true);
 
@@ -892,10 +896,14 @@ void AArmoredCoreCharacter::GameOver()
 
 void AArmoredCoreCharacter::GameClear()
 {
+	SetActorHiddenInGame(true);
 	MainUI->PlayerGameClear->SetVisibility(ESlateVisibility::Visible);
 	MainUI->PlayerGameClear->PlayMyAnimation();
 
-	SetActorHiddenInGame(true);
+
+	GetWorld()->GetTimerManager().ClearTimer(RArmFireTimerHandle);
+	StopLoopingSound(RifleSound);
+	
 	
 	GetWorld()->GetFirstPlayerController()->SetIgnoreMoveInput(true);
 	GetWorld()->GetFirstPlayerController()->SetIgnoreLookInput(true);
