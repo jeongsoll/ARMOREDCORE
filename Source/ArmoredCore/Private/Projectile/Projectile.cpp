@@ -58,20 +58,24 @@ void AProjectile::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	auto* player = Cast<AArmoredCoreCharacter>(OtherActor);
 	if (player)
 	{
+		
 		player->CharacterTakeDamage(Damage);
 		if (player->CurrentHP <= 0 && !player->IsDead)
 			player->Dead();
 		Destroy();
-		return;
+
 	}
 
 	auto* boss = Cast<AJS_Boss>(OtherActor);
 	if (boss)
 	{
+		UE_LOG(LogTemp,Warning,TEXT("AMissile::OnMyBeginOverlap"));
 		boss->CharacterTakeDamage(Damage);
 		if (boss->CurrentHP <= 0 && !boss->IsDead)
 			boss->Dead();
 		Destroy();
-		return;
+
 	}
+
+	Destroy();
 }

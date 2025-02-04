@@ -140,7 +140,7 @@ AArmoredCoreCharacter::AArmoredCoreCharacter()
 	
 	IsAssertBoostOn = false;
 	IsAssertBoostLaunch = false;
-	AssertBoostSpeed = 7.0f;
+	AssertBoostSpeed = 15.0f;
 	
 	// 공격
 	IsAttacking = false;
@@ -532,10 +532,10 @@ void AArmoredCoreCharacter::CheckForObstacles()
 		if (CurrentStateEnum != EPlayerState::Flying || CurrentStateEnum != EPlayerState::AssertBoost)
 		{
 			GetCameraBoom()->SocketOffset = UKismetMathLibrary::VInterpTo(GetCameraBoom()->SocketOffset,OriginCamOffset,GetWorld()->GetDeltaSeconds(), 5.0f);;
+			float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength,300.0f,GetWorld()->GetDeltaSeconds(),180.0f);
+			CameraBoom->TargetArmLength = CamArmLength;
 		}
 
-		float CamArmLength = UKismetMathLibrary::FInterpTo_Constant(CameraBoom->TargetArmLength,300.0f,GetWorld()->GetDeltaSeconds(),180.0f);
-		CameraBoom->TargetArmLength = CamArmLength;
 	}
 }
 
@@ -729,7 +729,6 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 			{
 				weapon->Reload();
 			}
-			
 			auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
 			if (projectile)
 			{
@@ -755,10 +754,10 @@ void AArmoredCoreCharacter::FireWithAmmoCheck(EPlayerUsedWeaponPos weaponPos, UW
 			{
 				weapon->Reload();
 			}
-			
+			PlayLoopingSound(MissileSound);
 			for (int i = 0; i < 4; i++)
 			{
-				transform.SetLocation(FVector3d(transform.GetLocation().X, transform.GetLocation().Y + 30*i, transform.GetLocation().Z));
+				transform.SetLocation(FVector3d(transform.GetLocation().X, transform.GetLocation().Y + 40*(i+1), transform.GetLocation().Z));
 				auto* projectile = MakeProjectile(weapon->ProjectileType,transform);
 				if (projectile)
 				{
@@ -797,7 +796,12 @@ void AArmoredCoreCharacter::RArmFirePressed()
 	if (!GetWorld()->GetTimerManager().IsTimerActive(RArmFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().SetTimer(RArmFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RArm);},0.3f,true);
-		PlayLoopingSound(RifleSound);
+		if (RArmWeapon->RemainAmmo > 0)
+			PlayLoopingSound(RifleSound);
+		else
+		{
+			StopLoopingSound(RifleSound);
+		}
 	}
 }
 
@@ -819,7 +823,6 @@ void AArmoredCoreCharacter::RShoulderFirePressed()
 	if (!GetWorld()->GetTimerManager().IsTimerActive(RShoulderFireTimerHandle))
 	{
 		GetWorld()->GetTimerManager().SetTimer(RShoulderFireTimerHandle,[this](){this->FireWeapon(EPlayerUsedWeaponPos::RShoulder);},0.3f,true);
-		PlayLoopingSound(MissileSound);
 	}
 }
 

@@ -35,6 +35,8 @@ void AMissile::Tick(float DeltaTime)
 void AMissile::OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult)
 {
 	Super::OnMyBeginOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),Effect,OtherActor->GetActorLocation(),OtherActor->GetActorRotation(),FVector(0.5f,0.5f,0.5f));
 }
 
 

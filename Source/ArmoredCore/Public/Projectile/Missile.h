@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Projectile.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Missile.generated.h"
 
 UCLASS()
@@ -24,5 +26,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnMyBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* Effect;
+
+	
 
 };
